@@ -36,7 +36,7 @@ public class DatabaseLoaderTexture_SHAB : DatabaseLoader<GameDatabase.TextureInf
 			Shader[] shaders = bundle.LoadAllAssets<Shader>();
 			foreach (Shader shader in shaders) {
 				Debug.Log($"[Shabby] adding {shader.name}");
-				MaterialDetour.AddShader (shader);
+				Shabby.AddShader (shader);
 			}
 		}
 		yield break;
