@@ -43,10 +43,13 @@ namespace Shabby {
 		{
 			Shader shader;
 			if (loadedShaders.TryGetValue (shaderName, out shader)) {
-				Debug.Log ($"[Shabby] custom shader :{shader.name}");
+				Debug.Log ($"[Shabby] custom shader: {shader.name}");
 				return shader;
 			}
 			shader = Shader.Find(shaderName);
+			if (shader != null) {
+				Debug.Log ($"[Shabby] stock shader: {shader.name}");
+			}
 			return shader;
 		}
 

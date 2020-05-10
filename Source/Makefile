@@ -11,6 +11,7 @@ Shabby_FILES := \
 	assembly/AssemblyInfo.cs	\
 	assembly/VersionReport.cs	\
 	Material.cs					\
+	PartMatInfo.cs				\
 	Shabby.cs					\
 	ShabLoader.cs				\
 	$e
