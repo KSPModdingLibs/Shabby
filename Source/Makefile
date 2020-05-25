@@ -17,8 +17,8 @@ Shabby_FILES := \
 	$e
 
 RESGEN2		:= resgen2
-GMCS		:= mcs
-GMCSFLAGS	:= -optimize -warnaserror -debug -unsafe
+CSC			:= csc
+CSCFLAGS	:= -optimize -warnaserror -debug -unsafe
 GIT			:= git
 TAR			:= tar
 ZIP			:= zip
@@ -32,8 +32,8 @@ version:
 info:
 	@echo "${MODNAME} Build Information"
 	@echo "    resgen2:    ${RESGEN2}"
-	@echo "    gmcs:       ${GMCS}"
-	@echo "    gmcs flags: ${GMCSFLAGS}"
+	@echo "    csc:        ${CSC}"
+	@echo "    csc flags:  ${CSCFLAGS}"
 	@echo "    git:        ${GIT}"
 	@echo "    tar:        ${TAR}"
 	@echo "    zip:        ${ZIP}"
@@ -41,11 +41,13 @@ info:
 
 bin/Shabby.dll: ${Shabby_FILES}
 	@mkdir -p bin
-	${GMCS} ${GMCSFLAGS} -t:library -lib:${MANAGED} \
-		-r:Assembly-CSharp,Assembly-CSharp-firstpass \
-		-r:UnityEngine \
-		-r:UnityEngine.CoreModule \
-		-r:UnityEngine.AssetBundleModule \
+	${CSC} ${CSCFLAGS} -highentropyva- -noconfig -nostdlib+ -t:library \
+		-lib:${MANAGED} \
+		-r:${MANAGED}/mscorlib.dll,${MANAGED}/System.dll,${MANAGED}/System.Core.dll \
+		-r:Assembly-CSharp.dll,Assembly-CSharp-firstpass.dll \
+		-r:UnityEngine.dll \
+		-r:UnityEngine.CoreModule.dll \
+		-r:UnityEngine.AssetBundleModule.dll \
 		-r:../Assets/0Harmony.1.2.0.1.dll \
 		-out:$@ $^
 
