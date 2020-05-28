@@ -26,7 +26,7 @@ using Harmony;
 namespace Shabby {
 
 	[KSPAddon(KSPAddon.Startup.Instantly, true)]
-	class Shabby : MonoBehaviour
+	public class Shabby : MonoBehaviour
 	{
 		const BindingFlags bindFlags = BindingFlags.NonPublic | BindingFlags.Static;
 		public delegate void RMTdelegate (BinaryReader br, Material mat, string name);
