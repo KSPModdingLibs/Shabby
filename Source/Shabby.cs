@@ -47,9 +47,9 @@ namespace Shabby {
 				return shader;
 			}
 			shader = Shader.Find(shaderName);
-			if (shader != null) {
-				Debug.Log ($"[Shabby] stock shader: {shader.name}");
-			}
+			//if (shader != null) {
+			//	Debug.Log ($"[Shabby] stock shader: {shader.name}");
+			//}
 			return shader;
 		}
 
@@ -75,6 +75,7 @@ namespace Shabby {
 				harmony.PatchAll (Assembly.GetExecutingAssembly ());
 
 				HookReadMaterial (harmony);
+				Debug.Log($"[Shabby] hooked");
 			}
 		}
 	}
