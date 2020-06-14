@@ -34,6 +34,5 @@ cat > bin/${MODNAME}.version <<EOF
 	"URL":"http://taniwha.org/~bill/${MODNAME}.version",
 	"DOWNLOAD":"http://taniwha.org/~bill/${MODNAME}_v$full_version.zip",
 	"VERSION":{"MAJOR":$MAJOR,"MINOR":$MINOR,"PATCH":$PATCH,"BUILD":$BUILD},
-	"KSP_VERSION":{"MAJOR":$KSPMAJOR,"MINOR":$KSPMINOR,"PATCH":$KSPPATCH}
 }
 EOF
