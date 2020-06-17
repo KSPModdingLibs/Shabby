@@ -1,10 +1,10 @@
 #! /bin/sh
 set -e
 ver=`tools/git-version-gen --prefix v .tarball-version`
-make GAMEDATA=`pwd`/tmp install
+make GAMEDATA=`pwd`/tmp/GameData install
 cd tmp
-zip -r9 ../${MODNAME}_v${ver}.zip ${MODNAME}
-cp ${MODNAME}/Plugins/${MODNAME}.version ..
+zip -r9 ../${MODNAME}_v${ver}.zip GameData
+cp GameData/${MODNAME}/Plugins/${MODNAME}.version ..
 cd ..
 rm -rf tmp
 
