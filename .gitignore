@@ -5,7 +5,6 @@
 *.userprefs
 *.suo
 *.zip
-*.sln
 *.swp
 *.blend?
 *.pyc
@@ -16,3 +15,5 @@ bin
 *.csproj.user
 
 Assets/*.png
+.idea
+Shabby.sln.DotSettings.user

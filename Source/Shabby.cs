@@ -20,8 +20,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
-
-using Harmony;
+using HarmonyLib;
 
 namespace Shabby {
 
@@ -53,7 +52,7 @@ namespace Shabby {
 			return shader;
 		}
 
-		void HookReadMaterial(HarmonyInstance harmony)
+		void HookReadMaterial(Harmony harmony)
 		{
 			var asm = typeof(GameDatabase).Assembly;
 			var pr = asm.GetType("PartReader");
@@ -63,7 +62,7 @@ namespace Shabby {
 
 			var original = pr.GetMethod("ReadMaterial4", bindFlags);
 			var prefix = mp.GetMethod("ReadMaterial4", bindFlags);
-			harmony.Patch (original, new HarmonyMethod (prefix), null);
+			harmony.Patch(original, new HarmonyMethod(prefix), null);
 		}
 
 		void Awake ()
@@ -71,10 +70,10 @@ namespace Shabby {
 			if (loadedShaders == null) {
 				loadedShaders = new Dictionary<string, Shader> ();
 
-				HarmonyInstance harmony = HarmonyInstance.Create ("Shabby");
-				harmony.PatchAll (Assembly.GetExecutingAssembly ());
+				var harmony = new Harmony("Shabby");
+				harmony.PatchAll(Assembly.GetExecutingAssembly());
 
-				HookReadMaterial (harmony);
+				HookReadMaterial(harmony);
 				Debug.Log($"[Shabby] hooked");
 			}
 		}
