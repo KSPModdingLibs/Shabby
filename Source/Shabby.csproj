@@ -56,5 +56,8 @@
     <Compile Include="Shabby.cs" />
     <Compile Include="ShabLoader.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include=".editorconfig" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
