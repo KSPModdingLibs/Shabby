@@ -24,7 +24,7 @@ info:
 	@echo "    zip:        ${ZIP}"
 	@echo "    KSP Data:   ${KSPDIR}"
 
-HARMONY := 0Harmony.1.2.0.1.dll
+HARMONY := 0Harmony.dll
 
 clean:
 	#rm -f icon_button.png
