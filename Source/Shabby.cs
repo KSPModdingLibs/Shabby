@@ -1,4 +1,4 @@
-/*
+﻿/*
 This file is part of Shabby.
 
 Shabby is free software: you can redistribute it and/or
@@ -30,17 +30,31 @@ using Code = Mono.Cecil.Cil.Code;
 
 namespace Shabby {
 
+	struct Replacement
+	{
+		public Replacement(ConfigNode node)
+		{
+			name = node.GetValue(nameof(name));
+			shader = node.GetValue(nameof(shader));
+		}
+
+		public string name;
+		public string shader;
+	}
+
 	[KSPAddon(KSPAddon.Startup.Instantly, true)]
 	public class Shabby : MonoBehaviour
 	{
 		static Dictionary<string, Shader> loadedShaders;
+
+		static readonly Dictionary<string, Replacement> nameReplacements = new Dictionary<string, Replacement>();
 
 		public static void AddShader (Shader shader)
 		{
 			loadedShaders[shader.name] = shader;
 		}
 
-		public static Shader FindShader (string shaderName)
+		static Shader FindLoadedShader(string shaderName)
 		{
 			Shader shader;
 			if (loadedShaders.TryGetValue (shaderName, out shader)) {
@@ -52,6 +66,42 @@ namespace Shabby {
 			//	Debug.Log ($"[Shabby] stock shader: {shader.name}");
 			//}
 			return shader;
+		}
+
+		public static Shader FindShader(string shaderName)
+		{
+			Shader shader = null;
+			if (nameReplacements.TryGetValue (shaderName, out var replacement))
+			{
+				shader = FindLoadedShader(replacement.shader);
+
+				if (shader == null)
+				{
+					Debug.LogError($"[Shabby] failed to find shader {replacement.shader} to replace {shaderName}");
+				}
+			}
+
+			if (shader == null)
+			{
+				shader = FindLoadedShader(shaderName);
+			}
+
+			return shader;
+		}
+
+		public static void ModuleManagerPostLoad()
+		{
+			var configNodes = GameDatabase.Instance.GetConfigNodes("SHABBY");
+			foreach (var shabbyNode in configNodes)
+			{
+				var replacementNodes = shabbyNode.GetNodes("REPLACE");
+				foreach (var replacementNode in replacementNodes)
+				{
+					Replacement replacement = new Replacement(replacementNode);
+					
+					nameReplacements[replacement.name] = replacement;
+				}
+			}
 		}
 
 		void Awake ()
