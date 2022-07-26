@@ -10,8 +10,6 @@ TARGETS		:= bin/Shabby.dll
 Shabby_FILES := \
 	assembly/AssemblyInfo.cs	\
 	assembly/VersionReport.cs	\
-	Material.cs					\
-	PartMatInfo.cs				\
 	Shabby.cs					\
 	ShabLoader.cs				\
 	$e
@@ -48,7 +46,7 @@ bin/Shabby.dll: ${Shabby_FILES}
 		-r:UnityEngine.dll \
 		-r:UnityEngine.CoreModule.dll \
 		-r:UnityEngine.AssetBundleModule.dll \
-		-r:../Assets/0Harmony.1.2.0.1.dll \
+		-r:../Assets/0Harmony.dll \
 		-out:$@ $^
 
 clean:

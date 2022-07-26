@@ -159,7 +159,7 @@ namespace Shabby {
 
 										if (callSite == null)
 											throw new MemberAccessException();
-									} catch (Exception e) {
+									} catch {
 										Debug.LogWarning($"[Shabby] Failed to patch method {assemblyDef.Name}::{typeDef.Name}.{methodDef.Name}");
 										break;
 									}
