@@ -123,12 +123,36 @@ namespace Shabby {
 
 			List<MethodBase> callSites = new List<MethodBase>();
 
+			Debug.Log($"[Shabby]: Beginning search for callsites");
+
 			// Don't use appdomain, we don't want to accidentally patch Unity itself and this avoid
 			// having to iterate on the BCL and Unity assemblies.
 			foreach (AssemblyLoader.LoadedAssembly kspAssembly in AssemblyLoader.loadedAssemblies) {
 				if (kspAssembly.assembly == Assembly.GetExecutingAssembly())
 					continue;
 
+// alternative implementation using Harmony instead of Cecil, but this is like 4x slower
+#if false
+				foreach (var type in kspAssembly.assembly.GetTypes()) {
+					var methods = type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly);
+					foreach (var method in methods) {
+						try {
+							if (method.HasMethodBody() && !method.ContainsGenericParameters && !method.IsGenericMethod) {
+								foreach (var instruction in PatchProcessor.ReadMethodBody(method)) {
+									if (instruction.Key == OpCodes.Call) {
+										if (object.ReferenceEquals(instruction.Value, mInfo_ShaderFind_Original)) {
+											callSites.Add(method);
+											break;
+										}
+									}
+								}
+							}
+						} catch (Exception ex) {
+							Debug.LogError($"[Shabby] excpetion while patching {method.Name}: {ex}");
+						}
+					}
+				}
+#else
 				if (string.IsNullOrEmpty(kspAssembly.assembly?.Location))
 					continue;
 
@@ -171,6 +195,9 @@ namespace Shabby {
 						}
 					}
 				}
+
+				assemblyDef.Dispose();
+#endif
 			}
 
 			Harmony harmony = new Harmony("Shabby");
