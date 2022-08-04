@@ -24,7 +24,12 @@ info:
 	@echo "    zip:        ${ZIP}"
 	@echo "    KSP Data:   ${KSPDIR}"
 
-HARMONY := 0Harmony.dll
+HARMONY := \
+	0Harmony.dll \
+	Harmony.version \
+	HarmonyInstallChecker.dll \
+	ReadMe.txt
+
 HARMONYDIR := ${GAMEDATA}/000_Harmony
 clean:
 	#rm -f icon_button.png
