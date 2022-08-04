@@ -25,12 +25,12 @@ info:
 	@echo "    KSP Data:   ${KSPDIR}"
 
 HARMONY := 0Harmony.dll
-
+HARMONYDIR := ${GAMEDATA}/000_Harmony
 clean:
 	#rm -f icon_button.png
 
 install: all
-	mkdir -p ${PLUGINDIR}
-	cp ${HARMONY} ${PLUGINDIR}
+	mkdir -p ${HARMONYDIR}
+	cp ${HARMONY} ${HARMONYDIR}
 
 .PHONY: all clean install
