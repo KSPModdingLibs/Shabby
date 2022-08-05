@@ -19,8 +19,6 @@ using System;
 using UnityEngine;
 using System.Reflection;
 
-using KSP.IO;
-
 namespace Shabby {
 
 	[KSPAddon(KSPAddon.Startup.Instantly, true)]

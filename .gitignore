@@ -14,5 +14,6 @@ build
 obj
 bin
 *.csproj.user
+*.DotSettings.user
 
 Assets/*.png
