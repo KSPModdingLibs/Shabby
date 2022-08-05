@@ -1,5 +1,4 @@
 [*.cs]
-indent_style = tabs
 csharp_indent_labels = one_less_than_current
 csharp_space_around_binary_operators = before_and_after
 csharp_using_directive_placement = outside_namespace:silent
@@ -27,15 +26,13 @@ csharp_style_deconstructed_variable_declaration = true:suggestion
 csharp_style_unused_value_assignment_preference = discard_variable:suggestion
 csharp_style_unused_value_expression_statement_preference = discard_variable:silent
 csharp_prefer_static_local_function = true:suggestion
-csharp_new_line_before_open_brace = accessors,anonymous_methods,anonymous_types,lambdas,methods,object_collection_array_initializers,properties,types
+csharp_new_line_before_open_brace = accessors,anonymous_methods,anonymous_types,lambdas,methods,properties,types
 csharp_new_line_before_else = false
 csharp_new_line_before_catch = false
 csharp_new_line_before_finally = false
 csharp_space_between_method_declaration_name_and_open_parenthesis = false
 csharp_space_between_method_call_name_and_opening_parenthesis = false
 
-
-[*.{cs,vb}]
 #### Naming styles ####
 
 # Naming rules
