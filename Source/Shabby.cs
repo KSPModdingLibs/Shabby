@@ -15,6 +15,7 @@ You should have received a copy of the GNU General Public License
 along with Shabby.  If not, see
 <http://www.gnu.org/licenses/>.
 */
+
 using System;
 using System.IO;
 using System.Collections.Generic;
@@ -28,8 +29,8 @@ using Mono.Cecil.Rocks;
 using MonoMod.Utils;
 using Code = Mono.Cecil.Cil.Code;
 
-namespace Shabby {
-
+namespace Shabby
+{
 	struct Replacement
 	{
 		public Replacement(ConfigNode node)
@@ -61,6 +62,7 @@ namespace Shabby {
 				Debug.Log($"[Shabby] custom shader: {shader.name}");
 				return shader;
 			}
+
 			shader = Shader.Find(shaderName);
 			//if (shader != null) {
 			//	Debug.Log ($"[Shabby] stock shader: {shader.name}");

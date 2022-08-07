@@ -9,10 +9,13 @@
 *.swp
 *.blend?
 *.pyc
-*.version
 build
 obj
 bin
 *.csproj.user
+*.DotSettings.user
 
 Assets/*.png
+GameData
+Source/assembly/AssemblyInfo.cs
+Assets/Shabby.version
