@@ -1,0 +1,136 @@
+name: Build and Release
+on: [ push ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Setup .NET Core SDK
+        uses: actions/setup-dotnet@v1.7.2
+        with:
+          dotnet-version: '6.0.x'
+
+      - name: Install Python Tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r tools/requirements.txt
+
+      - name: Download Dependencies
+        run: |
+          mkdir -p Source/dlls
+          mkdir -p GameData
+          wget --user drewcassidy --password ${{ secrets.PILE_OF_ROCKS_PASS }} https://pileof.rocks/Secret/KSP-1.12.3-dlls.zip
+          unzip KSP-*-dlls.zip -d Source/
+          wget https://github.com/KSPModdingLibs/HarmonyKSP/releases/download/2.2.1.0/HarmonyKSP_2.2.1.0_for_KSP1.8+.zip
+          unzip HarmonyKSP*.zip
+          cp GameData/000_Harmony/0Harmony.dll Source/dlls/
+
+      - name: Generate Version Info
+        run: |
+          python tools/version.py
+
+      - name: Validate Version Info
+        uses: DasSkelett/AVC-VersionFileValidator@master
+        with: 
+          only: '["./Assets/Shabby.version"]'
+
+      - name: Build DLL
+        run: |
+          dotnet build --configuration Release Shabby.sln
+
+      - name: Upload Unbundled Build
+        uses: actions/upload-artifact@v3
+        with:
+          name: Shabby-unbundled
+          path: |
+            GameData/Shabby
+            README.md 
+            CHANGELOG.md 
+            license.txt 
+
+      - name: Upload Bundled Build
+        uses: actions/upload-artifact@v3
+        with:
+          name: Shabby
+          path: |
+            GameData
+            README.md 
+            CHANGELOG.md 
+            license.txt 
+  
+  
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+    
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install Python Tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install yaclog
+
+      - name: Setup SSH keys
+        uses: kielabokkie/ssh-key-and-known-hosts-action@v1
+        with:
+          ssh-private-key: ${{ secrets.PILE_OF_ROCKS_PRIVATE_KEY }}
+          ssh-host: pileof.rocks
+
+      - name: Get version name and body
+        run: |
+          echo "VERSION_TITLE=$(yaclog show -n)" >> $GITHUB_ENV
+          echo "$(yaclog show -mb)" >> RELEASE.md
+
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Zip Download Packages
+        run: |
+          mkdir bundled
+          mkdir unbundled
+          mkdir deploy
+
+          zip -r bundled/Shabby-$GITHUB_REF.zip Shabby/*
+          zip -r unbundled/Shabby-$GITHUB_REF.zip Shabby-unbundled/*
+          
+          cp bundled/Shabby-*.zip deploy/
+          cp unbundled/Shabby-*.zip deploy/
+          cp bundled/Shabby-*.zip deploy/Shabby-latest.zip
+          cp Shabby/GameData/Shabby/Shabby.version deploy/
+          
+          ls bundled
+          ls unbundled
+          ls deploy
+
+      - name: Publish to Github
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            bundled/Shabby-*.zip 
+            Shabby/GameData/Shabby/Shabby.version
+          name: Shabby Version ${{ env.GITHUB_REF }}
+          body_path: RELEASE.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish to Server
+        run: |
+          rsync -t deploy/* drewcassidy@pileof.rocks:/var/www/pileof.rocks/html/KSP/
+        
