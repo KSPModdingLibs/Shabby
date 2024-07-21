@@ -45,6 +45,8 @@ namespace Shabby {
 	[KSPAddon(KSPAddon.Startup.Instantly, true)]
 	public class Shabby : MonoBehaviour
 	{
+		static Harmony harmony;
+
 		static Dictionary<string, Shader> loadedShaders;
 
 		static readonly Dictionary<string, Replacement> nameReplacements = new Dictionary<string, Replacement>();
@@ -104,7 +106,7 @@ namespace Shabby {
 			if (loadedShaders == null) {
 				loadedShaders = new Dictionary<string, Shader>();
 
-				var harmony = new Harmony("Shabby");
+				harmony = new Harmony("Shabby");
 				harmony.PatchAll(Assembly.GetExecutingAssembly());
 
 				Debug.Log($"[Shabby] hooked");
@@ -200,7 +202,6 @@ namespace Shabby {
 #endif
 			}
 
-			Harmony harmony = new Harmony("Shabby");
 			MethodInfo callSiteTranspiler = AccessTools.Method(typeof(Shabby), nameof(Shabby.CallSiteTranspiler));
 
 			foreach (MethodBase callSite in callSites) {
