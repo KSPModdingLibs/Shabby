@@ -54,6 +54,8 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Shabby.cs" />
+    <Compile Include="MaterialDef.cs" />
+    <Compile Include="MaterialReplacement.cs" />
     <Compile Include="ShabLoader.cs" />
   </ItemGroup>
   <ItemGroup>

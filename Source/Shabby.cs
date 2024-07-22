@@ -99,6 +99,8 @@ namespace Shabby {
 					nameReplacements[replacement.name] = replacement;
 				}
 			}
+
+			MaterialDefLibrary.Load();
 		}
 
 		void Awake()

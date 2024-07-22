@@ -12,6 +12,8 @@ Shabby_FILES := \
 	assembly/VersionReport.cs	\
 	Shabby.cs					\
 	ShabLoader.cs				\
+	MaterialDef.cs				\
+	MaterialReplacements.cs		\
 	$e
 
 RESGEN2		:= resgen2
