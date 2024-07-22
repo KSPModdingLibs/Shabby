@@ -29,9 +29,9 @@ class MaterialReplacement
 	[Persistent(name = nameof(materialDef))] private string defName;
 	public MaterialDef materialDef = null;
 
-	[Persistent] public bool blanketApply = false;
 	public List<string> targetMaterials;
 	public List<string> targetTransforms;
+	public bool blanketApply = false;
 
 	readonly Dictionary<Material, Material> replacedMaterials = new Dictionary<Material, Material>();
 
@@ -51,6 +51,10 @@ class MaterialReplacement
 		if (targetMaterials.Count > 0 && targetTransforms.Count > 0) {
 			Debug.LogError($"[Shabby]: material replacement {defName} may not specify both materials and transforms");
 			targetTransforms.Clear();
+		}
+
+		if (targetMaterials.Count == 0 && targetTransforms.Count == 0) {
+			blanketApply = true;
 		}
 	}
 
@@ -95,7 +99,7 @@ public class MaterialReplacementPatch
 		}
 
 		// Apply transform replacements if any.
-		if (replacements.Any(rep => !rep.blanketApply && rep.targetTransforms.Count > 0)) {
+		if (replacements.Any(rep => rep.targetTransforms.Count > 0)) {
 			foreach (var transform in __result.GetComponentsInChildren<Transform>()) {
 				foreach (var replacement in replacements) {
 					if (!replacement.MatchTransform(transform)) continue;
