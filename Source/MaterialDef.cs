@@ -55,8 +55,8 @@ public class MaterialDef
 	[Persistent(name = nameof(displayName))] private string _displayName = null;
 	public string displayName => _displayName ?? name;
 
-	[Persistent(name = "shader")] public string shaderName;
-	public Shader shader;
+	[Persistent(name = "shader")] public string shaderName = null;
+	public Shader shader = null;
 
 	public Dictionary<string, bool> keywords;
 	public Dictionary<string, float> floats;
@@ -67,9 +67,11 @@ public class MaterialDef
 	{
 		ConfigNode.LoadObjectFromConfig(this, node);
 
-		shader = Shabby.FindShader(shaderName);
-		if (shader == null) {
-			Debug.LogError($"[Shabby]: failed to find shader {shaderName}");
+		if (shaderName != null) {
+			shader = Shabby.FindShader(shaderName);
+			if (shader == null) {
+				Debug.LogError($"[Shabby]: failed to find shader {shaderName}");
+			}
 		}
 
 		keywords = LoadDictionary<bool>(node.GetNode("Keyword"));
@@ -87,7 +89,10 @@ public class MaterialDef
 				continue;
 			}
 
-			MaterialDefLibrary.normalMapProperties.TryGetValue(shaderName, out var nrmPropertyName);
+			string nrmPropertyName = null;
+			if (shaderName != null) {
+				MaterialDefLibrary.normalMapProperties.TryGetValue(shaderName, out nrmPropertyName);
+			}
 			var isNormalMap = kvp.Key == (nrmPropertyName ?? "_BumpMap");
 
 			textures[kvp.Key] = isNormalMap ? texInfo.normalMap : texInfo.texture;
