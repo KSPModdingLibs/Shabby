@@ -76,7 +76,7 @@ public class MaterialDef
 
 		floats = LoadDictionary<float>(node.GetNode("Float"));
 
-		colors = LoadDictionary<Color>(node.GetNode("Color"));
+		colors = LoadDictionary<Color>(node.GetNode("Color"), ParseColor);
 
 		var textureNames = LoadDictionary<string>(node.GetNode("Texture"));
 		foreach (var kvp in textureNames) {
@@ -98,13 +98,13 @@ public class MaterialDef
 		AccessTools.MethodDelegate<Func<Type, string, object>>(
 			AccessTools.DeclaredMethod(typeof(ConfigNode), "ReadValue"));
 
-	static Dictionary<string, T> LoadDictionary<T>(ConfigNode node)
+	static Dictionary<string, T> LoadDictionary<T>(ConfigNode node, Func<string, object> parser = null)
 	{
 		var items = new Dictionary<string, T>();
 		if (node == null) return items;
 
 		foreach (ConfigNode.Value item in node.values) {
-			object value = ReadValue(typeof(T), item.value);
+			object value = parser != null ? parser(item.value) : ReadValue(typeof(T), item.value);
 			if (value is T parsed) {
 				items[item.name] = parsed;
 			} else {
@@ -113,6 +113,13 @@ public class MaterialDef
 		}
 
 		return items;
+	}
+
+	static object ParseColor(string value)
+	{
+		if (ColorUtility.TryParseHtmlString(value, out var color)) return color;
+		if (ParseExtensions.TryParseColor(value, out color)) return color;
+		return null;
 	}
 
 	public void ApplyTo(Material material)
