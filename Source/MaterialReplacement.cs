@@ -29,9 +29,11 @@ class MaterialReplacement
 	[Persistent(name = nameof(materialDef))] private string defName;
 	public MaterialDef materialDef = null;
 
-	public List<string> targetMaterials;
-	public List<string> targetTransforms;
-	public bool blanketApply = false;
+	public HashSet<string> targetMaterials;
+	public HashSet<string> targetTransforms;
+	public bool blanketApply;
+
+	public HashSet<string> ignoredMeshes;
 
 	readonly Dictionary<Material, Material> replacedMaterials = new Dictionary<Material, Material>();
 
@@ -45,25 +47,26 @@ class MaterialReplacement
 			Debug.LogError($"[Shabby]: failed to find material definition {defName}");
 		}
 
-		targetMaterials = node.GetValuesList("targetMaterial");
-		targetTransforms = node.GetValuesList("targetTransform");
+		targetMaterials = node.GetValuesList("targetMaterial").ToHashSet();
+		targetTransforms = node.GetValuesList("targetTransform").ToHashSet();
 
 		if (targetMaterials.Count > 0 && targetTransforms.Count > 0) {
 			Debug.LogError($"[Shabby]: material replacement {defName} may not specify both materials and transforms");
 			targetTransforms.Clear();
 		}
 
-		if (targetMaterials.Count == 0 && targetTransforms.Count == 0) {
-			blanketApply = true;
-		}
+		blanketApply = targetMaterials.Count == 0 && targetTransforms.Count == 0;
+
+		ignoredMeshes = node.GetValuesList("ignoreMesh").ToHashSet();
 	}
 
 	public bool MatchMaterial(Renderer renderer) => targetMaterials.Contains(renderer.sharedMaterial.name);
 
 	public bool MatchTransform(Transform transform) => targetTransforms.Contains(transform.name);
 
-	public void ApplyToSharedMaterial(Renderer renderer)
+	public void ApplyToSharedMaterialIfNotIgnored(Renderer renderer)
 	{
+		if (ignoredMeshes.Contains(renderer.transform.name)) return;
 		var sharedMat = renderer.sharedMaterial;
 		if (!replacedMaterials.TryGetValue(sharedMat, out var replacementMat)) {
 			replacementMat = new Material(sharedMat);
@@ -89,22 +92,22 @@ public class MaterialReplacementPatch
 			if (replacement.materialDef != null) replacements.Add(replacement);
 		}
 
-		// Apply blanket replacements and material name replacements.
+		// Apply blanket replacements or material name replacements.
 		foreach (var renderer in __result.GetComponentsInChildren<Renderer>()) {
 			foreach (var replacement in replacements) {
 				if (!replacement.blanketApply && !replacement.MatchMaterial(renderer)) continue;
-				replacement.ApplyToSharedMaterial(renderer);
+				replacement.ApplyToSharedMaterialIfNotIgnored(renderer);
 				break;
 			}
 		}
 
-		// Apply transform replacements if any.
+		// Apply transform replacements.
 		if (replacements.Any(rep => rep.targetTransforms.Count > 0)) {
 			foreach (var transform in __result.GetComponentsInChildren<Transform>()) {
 				foreach (var replacement in replacements) {
 					if (!replacement.MatchTransform(transform)) continue;
 					foreach (var renderer in transform.GetComponentsInChildren<Renderer>()) {
-						replacement.ApplyToSharedMaterial(renderer);
+						replacement.ApplyToSharedMaterialIfNotIgnored(renderer);
 					}
 					break;
 				}
