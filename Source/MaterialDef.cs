@@ -58,6 +58,8 @@ public class MaterialDef
 	[Persistent(name = "shader")] public string shaderName = null;
 	public Shader shader = null;
 
+	[Persistent] public bool preserveRenderQueue = false;
+
 	public Dictionary<string, bool> keywords;
 	public Dictionary<string, float> floats;
 	public Dictionary<string, Color> colors;
@@ -132,7 +134,12 @@ public class MaterialDef
 
 	public void ApplyTo(Material material)
 	{
-		if (shader != null) material.shader = shader;
+		if (shader != null) {
+			// Replacing the shader resets the render queue to the shader's default.
+			var renderQueue = preserveRenderQueue ? material.renderQueue : -1;
+			material.shader = shader;
+			material.renderQueue = renderQueue;
+		}
 
 		foreach (var kvp in keywords) {
 			if (kvp.Value) material.EnableKeyword(kvp.Key);
