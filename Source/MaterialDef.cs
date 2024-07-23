@@ -61,6 +61,7 @@ public class MaterialDef
 	public Dictionary<string, bool> keywords;
 	public Dictionary<string, float> floats;
 	public Dictionary<string, Color> colors;
+	public Dictionary<string, Vector4> vectors;
 	public Dictionary<string, Texture> textures = new Dictionary<string, Texture>();
 
 	public MaterialDef(ConfigNode node)
@@ -79,6 +80,8 @@ public class MaterialDef
 		floats = LoadDictionary<float>(node.GetNode("Float"));
 
 		colors = LoadDictionary<Color>(node.GetNode("Color"), ParseColor);
+
+		vectors = LoadDictionary<Vector4>(node.GetNode("Vector"));
 
 		var textureNames = LoadDictionary<string>(node.GetNode("Texture"));
 		foreach (var kvp in textureNames) {
@@ -139,6 +142,8 @@ public class MaterialDef
 		foreach (var kvp in floats) material.SetFloat(kvp.Key, kvp.Value);
 
 		foreach (var kvp in colors) material.SetColor(kvp.Key, kvp.Value);
+
+		foreach (var kvp in vectors) material.SetVector(kvp.Key, kvp.Value);
 
 		foreach (var kvp in textures) material.SetTexture(kvp.Key, kvp.Value);
 	}
