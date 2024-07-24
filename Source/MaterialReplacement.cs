@@ -69,8 +69,7 @@ class MaterialReplacement
 		if (ignoredMeshes.Contains(renderer.transform.name)) return;
 		var sharedMat = renderer.sharedMaterial;
 		if (!replacedMaterials.TryGetValue(sharedMat, out var replacementMat)) {
-			replacementMat = new Material(sharedMat);
-			materialDef.ApplyTo(replacementMat);
+			replacementMat = materialDef.Instantiate(sharedMat);
 			replacedMaterials[sharedMat] = replacementMat;
 		}
 		renderer.sharedMaterial = replacementMat;

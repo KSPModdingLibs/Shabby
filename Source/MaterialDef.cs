@@ -55,6 +55,8 @@ public class MaterialDef
 	[Persistent(name = nameof(displayName))] private string _displayName = null;
 	public string displayName => _displayName ?? name;
 
+	[Persistent] public bool updateExisting = true;
+
 	[Persistent(name = "shader")] public string shaderName = null;
 	public Shader shader = null;
 
@@ -77,6 +79,11 @@ public class MaterialDef
 			if (shader == null) {
 				Debug.LogError($"[Shabby]: failed to find shader {shaderName}");
 			}
+		}
+
+		if (!updateExisting && shader == null) {
+			Debug.LogError($"[Shabby][MaterialDef {name}] from-scratch material must define a valid shader");
+			updateExisting = true;
 		}
 
 		keywords = LoadDictionary<bool>(node.GetNode("Keyword"));
@@ -114,14 +121,23 @@ public class MaterialDef
 		return null;
 	}
 
-	public void ApplyTo(Material material)
+	/// <summary>
+	/// Create a new material based on this definition. The material name is copied from the
+	/// passed reference material. In update-existing mode, all properties are also copied from
+	/// the reference material.
+	/// </summary>
+	public Material Instantiate(Material referenceMaterial)
 	{
-		if (shader != null) {
-			// Replacing the shader resets the render queue to the shader's default.
-			var renderQueue = preserveRenderQueue ? material.renderQueue : -1;
-			material.shader = shader;
-			material.renderQueue = renderQueue;
+		Material material;
+		if (updateExisting) {
+			material = new Material(referenceMaterial);
+			if (shader != null) material.shader = shader;
+		} else {
+			material = new Material(shader) { name = referenceMaterial.name };
 		}
+
+		// Replacing the shader resets the render queue to the shader's default.
+		if (preserveRenderQueue) material.renderQueue = referenceMaterial.renderQueue;
 
 		foreach (var kvp in keywords) {
 			if (kvp.Value) material.EnableKeyword(kvp.Key);
@@ -153,6 +169,8 @@ public class MaterialDef
 
 			material.SetTexture(propName, texture);
 		}
+
+		return material;
 	}
 }
 
