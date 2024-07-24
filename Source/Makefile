@@ -13,7 +13,7 @@ Shabby_FILES := \
 	Shabby.cs					\
 	ShabLoader.cs				\
 	MaterialDef.cs				\
-	MaterialReplacements.cs		\
+	MaterialReplacement.cs		\
 	$e
 
 RESGEN2		:= resgen2

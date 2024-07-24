@@ -26,7 +26,7 @@ namespace Shabby
 
 class MaterialReplacement
 {
-	[Persistent(name = nameof(materialDef))] private string defName;
+	[Persistent(name = nameof(materialDef))] private string defName = null;
 	public MaterialDef materialDef = null;
 
 	public HashSet<string> targetMaterials;
