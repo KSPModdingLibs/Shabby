@@ -36,7 +36,7 @@ public static class MaterialDefLibrary
 			var property = node.GetValue("property");
 
 			if (string.IsNullOrEmpty(shader) || string.IsNullOrEmpty(property)) {
-				Debug.Log($"[Shabby]: invalid shader normal map property specification {shader} = {property}");
+				Debug.Log($"[Shabby] invalid shader normal map property specification {shader} = {property}");
 			} else {
 				normalMapProperties[shader] = property;
 			}
@@ -77,7 +77,7 @@ public class MaterialDef
 		if (shaderName != null) {
 			shader = Shabby.FindShader(shaderName);
 			if (shader == null) {
-				Debug.LogError($"[Shabby]: failed to find shader {shaderName}");
+				Debug.LogError($"[Shabby][MaterialDef {name}] failed to find shader {shaderName}");
 			}
 		}
 
@@ -97,7 +97,7 @@ public class MaterialDef
 		AccessTools.MethodDelegate<Func<Type, string, object>>(
 			AccessTools.DeclaredMethod(typeof(ConfigNode), "ReadValue"));
 
-	static Dictionary<string, T> LoadDictionary<T>(ConfigNode node, Func<string, object> parser = null)
+	Dictionary<string, T> LoadDictionary<T>(ConfigNode node, Func<string, object> parser = null)
 	{
 		var items = new Dictionary<string, T>();
 		if (node == null) return items;
@@ -107,7 +107,7 @@ public class MaterialDef
 			if (value is T parsed) {
 				items[item.name] = parsed;
 			} else {
-				Debug.LogError($"[Shabby]: failed to parse property {item.name} = {item.value} as a {typeof(T).Name}");
+				Debug.LogError($"[Shabby][MaterialDef {name}] failed to parse property {item.name} = {item.value} as a {typeof(T).Name}");
 			}
 		}
 

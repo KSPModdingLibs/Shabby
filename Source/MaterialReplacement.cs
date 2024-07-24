@@ -42,16 +42,16 @@ class MaterialReplacement
 		ConfigNode.LoadObjectFromConfig(this, node);
 
 		if (string.IsNullOrEmpty(defName)) {
-			Debug.LogError("[Shabby]: material replacement must reference a material definition");
+			Debug.LogError("[Shabby] material replacement must reference a material definition");
 		} else if (!MaterialDefLibrary.items.TryGetValue(defName, out materialDef)) {
-			Debug.LogError($"[Shabby]: failed to find material definition {defName}");
+			Debug.LogError($"[Shabby] failed to find material definition {defName}");
 		}
 
 		targetMaterials = node.GetValuesList("targetMaterial").ToHashSet();
 		targetTransforms = node.GetValuesList("targetTransform").ToHashSet();
 
 		if (targetMaterials.Count > 0 && targetTransforms.Count > 0) {
-			Debug.LogError($"[Shabby]: material replacement {defName} may not specify both materials and transforms");
+			Debug.LogError($"[Shabby] material replacement {defName} may not specify both materials and transforms");
 			targetTransforms.Clear();
 		}
 
