@@ -64,7 +64,9 @@ public class MaterialDef
 	public Dictionary<string, float> floats;
 	public Dictionary<string, Color> colors;
 	public Dictionary<string, Vector4> vectors;
-	public Dictionary<string, Texture> textures = new Dictionary<string, Texture>();
+	public Dictionary<string, string> textureNames;
+
+	readonly Dictionary<string, Texture> textures = new Dictionary<string, Texture>();
 
 	public MaterialDef(ConfigNode node)
 	{
@@ -78,30 +80,10 @@ public class MaterialDef
 		}
 
 		keywords = LoadDictionary<bool>(node.GetNode("Keyword"));
-
 		floats = LoadDictionary<float>(node.GetNode("Float"));
-
 		colors = LoadDictionary<Color>(node.GetNode("Color"), ParseColor);
-
 		vectors = LoadDictionary<Vector4>(node.GetNode("Vector"));
-
-		var textureNames = LoadDictionary<string>(node.GetNode("Texture"));
-		foreach (var kvp in textureNames) {
-			var texInfo = GameDatabase.Instance.GetTextureInfo(kvp.Value);
-			if (texInfo == null)
-			{
-				Debug.LogError($"[Shabby]: failed to find texture {kvp.Value}");
-				continue;
-			}
-
-			string nrmPropertyName = null;
-			if (shaderName != null) {
-				MaterialDefLibrary.normalMapProperties.TryGetValue(shaderName, out nrmPropertyName);
-			}
-			var isNormalMap = kvp.Key == (nrmPropertyName ?? "_BumpMap");
-
-			textures[kvp.Key] = isNormalMap ? texInfo.normalMap : texInfo.texture;
-		}
+		textureNames = LoadDictionary<string>(node.GetNode("Texture"));
 	}
 
 	static readonly Func<Type, string, object> ReadValue =
@@ -152,7 +134,25 @@ public class MaterialDef
 
 		foreach (var kvp in vectors) material.SetVector(kvp.Key, kvp.Value);
 
-		foreach (var kvp in textures) material.SetTexture(kvp.Key, kvp.Value);
+		foreach (var kvp in textureNames) {
+			var (propName, texName) = (kvp.Key, kvp.Value);
+			if (!textures.TryGetValue(texName, out var texture)) {
+				var texInfo = GameDatabase.Instance.GetTextureInfo(texName);
+				if (texInfo == null)
+				{
+					Debug.LogError($"[Shabby] failed to find texture {texName}");
+					continue;
+				}
+
+				MaterialDefLibrary.normalMapProperties.TryGetValue(material.shader.name, out var nrmPropName);
+				var isNormalMap = propName == (nrmPropName ?? "_BumpMap");
+
+				texture = isNormalMap ? texInfo.normalMap : texInfo.texture;
+				textures[texName] = texture;
+			}
+
+			material.SetTexture(propName, texture);
+		}
 	}
 }
 
