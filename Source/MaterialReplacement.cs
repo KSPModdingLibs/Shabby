@@ -24,49 +24,26 @@ using UnityEngine;
 namespace Shabby
 {
 
-class MaterialReplacement
+public class MaterialReplacement : ModelFilter
 {
-	[Persistent(name = nameof(materialDef))] private string defName = null;
 	public MaterialDef materialDef = null;
-
-	public HashSet<string> targetMaterials;
-	public HashSet<string> targetTransforms;
-	public bool blanketApply;
-
-	public HashSet<string> ignoredMeshes;
-
 	readonly Dictionary<Material, Material> replacedMaterials = new Dictionary<Material, Material>();
 
-	public MaterialReplacement(ConfigNode node)
+	public MaterialReplacement(ConfigNode node) : base(node)
 	{
-		ConfigNode.LoadObjectFromConfig(this, node);
-
+		var defName = node.GetValue("materialDef");
 		if (string.IsNullOrEmpty(defName)) {
 			Debug.LogError("[Shabby] material replacement must reference a material definition");
-		} else if (!MaterialDefLibrary.items.TryGetValue(defName, out materialDef)) {
+			return;
+		}
+		if (!MaterialDefLibrary.items.TryGetValue(defName, out materialDef)) {
 			Debug.LogError($"[Shabby] failed to find material definition {defName}");
 		}
-
-		targetMaterials = node.GetValuesList("targetMaterial").ToHashSet();
-		targetTransforms = node.GetValuesList("targetTransform").ToHashSet();
-
-		if (targetMaterials.Count > 0 && targetTransforms.Count > 0) {
-			Debug.LogError($"[Shabby] material replacement {defName} may not specify both materials and transforms");
-			targetTransforms.Clear();
-		}
-
-		blanketApply = targetMaterials.Count == 0 && targetTransforms.Count == 0;
-
-		ignoredMeshes = node.GetValuesList("ignoreMesh").ToHashSet();
 	}
-
-	public bool MatchMaterial(Renderer renderer) => targetMaterials.Contains(renderer.sharedMaterial.name);
-
-	public bool MatchTransform(Transform transform) => targetTransforms.Contains(transform.name);
 
 	public void ApplyToSharedMaterialIfNotIgnored(Renderer renderer)
 	{
-		if (ignoredMeshes.Contains(renderer.transform.name)) return;
+		if (MatchIgnored(renderer)) return;
 		var sharedMat = renderer.sharedMaterial;
 		if (!replacedMaterials.TryGetValue(sharedMat, out var replacementMat)) {
 			replacementMat = materialDef.Instantiate(sharedMat);

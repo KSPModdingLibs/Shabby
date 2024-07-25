@@ -13,6 +13,7 @@ Shabby_FILES := \
 	Shabby.cs					\
 	ShabLoader.cs				\
 	MaterialDef.cs				\
+	ModelFilter.cs				\
 	MaterialReplacement.cs		\
 	$e
 
