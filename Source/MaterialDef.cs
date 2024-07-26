@@ -70,6 +70,8 @@ public class MaterialDef
 
 	readonly Dictionary<string, Texture> textures = new Dictionary<string, Texture>();
 
+	public readonly bool isValid = true;
+
 	public MaterialDef(ConfigNode node)
 	{
 		ConfigNode.LoadObjectFromConfig(this, node);
@@ -78,12 +80,13 @@ public class MaterialDef
 			shader = Shabby.FindShader(shaderName);
 			if (shader == null) {
 				Debug.LogError($"[Shabby][MaterialDef {name}] failed to find shader {shaderName}");
+				isValid = false;
 			}
 		}
 
 		if (!updateExisting && shader == null) {
 			Debug.LogError($"[Shabby][MaterialDef {name}] from-scratch material must define a valid shader");
-			updateExisting = true;
+			isValid = false;
 		}
 
 		keywords = LoadDictionary<bool>(node.GetNode("Keyword"));
@@ -128,6 +131,8 @@ public class MaterialDef
 	/// </summary>
 	public Material Instantiate(Material referenceMaterial)
 	{
+		if (!isValid) return new Material(referenceMaterial);
+
 		Material material;
 		if (updateExisting) {
 			material = new Material(referenceMaterial);
