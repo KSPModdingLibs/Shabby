@@ -34,7 +34,6 @@ public static class MaterialDefLibrary
 		foreach (var node in GameDatabase.Instance.GetConfigNodes("SHABBY_SHADER_NORMAL_MAP_PROPERTY")) {
 			var shader = node.GetValue("shader");
 			var property = node.GetValue("property");
-
 			if (string.IsNullOrEmpty(shader) || string.IsNullOrEmpty(property)) {
 				Debug.Log($"[Shabby] invalid shader normal map property specification {shader} = {property}");
 			} else {
@@ -44,7 +43,11 @@ public static class MaterialDefLibrary
 
 		foreach (var node in GameDatabase.Instance.GetConfigNodes("SHABBY_MATERIAL_DEF")) {
 			var def = new MaterialDef(node);
-			items[def.name] = def;
+			if (string.IsNullOrEmpty(def.name)) {
+				Debug.LogError("[Shabby] material definition must have a valid name");
+			} else {
+				items[def.name] = def;
+			}
 		}
 	}
 }
