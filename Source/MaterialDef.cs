@@ -61,15 +61,15 @@ public class MaterialDef
 	[Persistent] public bool updateExisting = true;
 
 	[Persistent(name = "shader")] public string shaderName = null;
-	public Shader shader = null;
+	public readonly Shader shader = null;
 
 	[Persistent] public bool preserveRenderQueue = false;
 
-	public Dictionary<string, bool> keywords;
-	public Dictionary<string, float> floats;
-	public Dictionary<string, Color> colors;
-	public Dictionary<string, Vector4> vectors;
-	public Dictionary<string, string> textureNames;
+	public readonly Dictionary<string, bool> keywords;
+	public readonly Dictionary<string, float> floats;
+	public readonly Dictionary<string, Color> colors;
+	public readonly Dictionary<string, Vector4> vectors;
+	public readonly Dictionary<string, string> textureNames;
 
 	readonly Dictionary<string, Texture> textures = new Dictionary<string, Texture>();
 

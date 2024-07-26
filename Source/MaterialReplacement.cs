@@ -26,7 +26,7 @@ namespace Shabby
 
 public class MaterialReplacement : ModelFilter
 {
-	public MaterialDef materialDef = null;
+	public readonly MaterialDef materialDef = null;
 	readonly Dictionary<Material, Material> replacedMaterials = new Dictionary<Material, Material>();
 
 	public MaterialReplacement(ConfigNode node) : base(node)

@@ -24,11 +24,11 @@ namespace Shabby
 {
 public class ModelFilter
 {
-	public HashSet<string> targetMaterials;
-	public HashSet<string> targetTransforms;
-	public bool blanketApply;
+	public readonly HashSet<string> targetMaterials;
+	public readonly HashSet<string> targetTransforms;
+	public readonly bool blanketApply;
 
-	public HashSet<string> ignoredMeshes;
+	public readonly HashSet<string> ignoredMeshes;
 
 	public ModelFilter(ConfigNode node)
 	{
