@@ -120,12 +120,14 @@ public class MaterialDef
 		return items;
 	}
 
-	static object ParseColor(string value)
+	public static bool ParseColor(string value, out Color color)
 	{
-		if (ColorUtility.TryParseHtmlString(value, out var color)) return color;
-		if (ParseExtensions.TryParseColor(value, out color)) return color;
-		return null;
+		if (ColorUtility.TryParseHtmlString(value, out color)) return true;
+		if (ParseExtensions.TryParseColor(value, out color)) return true;
+		return false;
 	}
+
+	static object ParseColor(string value) => ParseColor(value, out var color) ? (object)color : null;
 
 	/// <summary>
 	/// Create a new material based on this definition. The material name is copied from the
