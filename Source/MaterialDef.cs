@@ -43,9 +43,10 @@ public static class MaterialDefLibrary
 
 		foreach (var node in GameDatabase.Instance.GetConfigNodes("SHABBY_MATERIAL_DEF")) {
 			var def = new MaterialDef(node);
-			if (string.IsNullOrEmpty(def.name)) {
-				Debug.LogError("[Shabby] material definition must have a valid name");
-			} else {
+			if (string.IsNullOrEmpty(def.name) || !def.isValid) {
+				Debug.LogError($"[Shabby][MaterialDef {def.name}] removing invalid definition");
+			}
+			else {
 				items[def.name] = def;
 			}
 		}

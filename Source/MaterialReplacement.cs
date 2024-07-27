@@ -65,7 +65,7 @@ public class MaterialReplacementPatch
 		foreach (ConfigNode node in partCfg.nodes) {
 			if (node.name != replacementNodeName) continue;
 			var replacement = new MaterialReplacement(node);
-			if (replacement.materialDef?.isValid == true) replacements.Add(replacement);
+			if (replacement.materialDef != null) replacements.Add(replacement);
 		}
 
 		// Apply blanket replacements or material name replacements.
