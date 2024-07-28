@@ -90,7 +90,7 @@ namespace Shabby {
 			return shader;
 		}
 
-		public static void ModuleManagerPostLoad()
+		public static void MMPostLoadCallback()
 		{
 			var configNodes = GameDatabase.Instance.GetConfigNodes("SHABBY");
 			foreach (var shabbyNode in configNodes) {
@@ -123,6 +123,13 @@ namespace Shabby {
 				harmony.PatchAll(Assembly.GetExecutingAssembly());
 
 				Debug.Log($"[Shabby] hooked");
+
+				// Register as an explicit MM callback such that it is run before all reflected
+				// callbacks (as used by most mods), which may wish to access the MaterialDef library.
+				var addPostPatchCB = AccessTools.Method("ModuleManager.MMPatchLoader:AddPostPatchCallback");
+				var delegateType = addPostPatchCB.GetParameters()[0].ParameterType;
+				var callbackDelegate = Delegate.CreateDelegate(delegateType, typeof(Shabby), nameof(MMPostLoadCallback));
+				addPostPatchCB.Invoke(null, new object[] { callbackDelegate });
 			}
 		}
 
