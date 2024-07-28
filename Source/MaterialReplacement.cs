@@ -54,7 +54,7 @@ public class MaterialReplacement : ModelFilter
 }
 
 [HarmonyPatch(typeof(PartLoader), "CompileModel")]
-public class MaterialReplacementPatch
+class MaterialReplacementPatch
 {
 	static void Postfix(ref GameObject __result, ConfigNode partCfg)
 	{

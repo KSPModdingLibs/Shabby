@@ -49,6 +49,8 @@ namespace Shabby {
 
 		static Dictionary<string, Shader> loadedShaders;
 
+		public static readonly Dictionary<string, Shader> iconShaders = new Dictionary<string, Shader>();
+
 		static readonly Dictionary<string, Replacement> nameReplacements = new Dictionary<string, Replacement>();
 
 		public static void AddShader(Shader shader)
@@ -92,11 +94,20 @@ namespace Shabby {
 		{
 			var configNodes = GameDatabase.Instance.GetConfigNodes("SHABBY");
 			foreach (var shabbyNode in configNodes) {
-				var replacementNodes = shabbyNode.GetNodes("REPLACE");
-				foreach (var replacementNode in replacementNodes) {
+				foreach (var replacementNode in shabbyNode.GetNodes("REPLACE")) {
 					Replacement replacement = new Replacement(replacementNode);
-
 					nameReplacements[replacement.name] = replacement;
+				}
+
+				foreach (var iconNode in shabbyNode.GetNodes("ICON_SHADER")) {
+					var shader = iconNode.GetValue("shader");
+					var iconShaderName = iconNode.GetValue("iconShader");
+					var iconShader = FindShader(iconShaderName ?? "");
+					if (string.IsNullOrEmpty(shader) || iconShader == null) {
+						Debug.Log($"[Shabby] invalid icon shader specification {shader} -> {iconShaderName}");
+					} else {
+						iconShaders[shader] = iconShader;
+					}
 				}
 			}
 
