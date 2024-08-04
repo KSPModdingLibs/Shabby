@@ -26,27 +26,15 @@ namespace Shabby
 
 public static class MaterialDefLibrary
 {
-	public static readonly Dictionary<string, string> normalMapProperties = new Dictionary<string, string>();
 	public static readonly Dictionary<string, MaterialDef> items = new Dictionary<string, MaterialDef>();
 
 	public static void Load()
 	{
-		foreach (var node in GameDatabase.Instance.GetConfigNodes("SHABBY_SHADER_NORMAL_MAP_PROPERTY")) {
-			var shader = node.GetValue("shader");
-			var property = node.GetValue("property");
-			if (string.IsNullOrEmpty(shader) || string.IsNullOrEmpty(property)) {
-				Debug.Log($"[Shabby] invalid shader normal map property specification {shader} = {property}");
-			} else {
-				normalMapProperties[shader] = property;
-			}
-		}
-
 		foreach (var node in GameDatabase.Instance.GetConfigNodes("SHABBY_MATERIAL_DEF")) {
 			var def = new MaterialDef(node);
 			if (string.IsNullOrEmpty(def.name) || !def.isValid) {
 				Debug.LogError($"[Shabby][MaterialDef {def.name}] removing invalid definition");
-			}
-			else {
+			} else {
 				items[def.name] = def;
 			}
 		}
@@ -70,9 +58,7 @@ public class MaterialDef
 	public readonly Dictionary<string, float> floats;
 	public readonly Dictionary<string, Color> colors;
 	public readonly Dictionary<string, Vector4> vectors;
-	public readonly Dictionary<string, string> textureNames;
-
-	readonly Dictionary<string, Texture> textures = new Dictionary<string, Texture>();
+	public readonly Dictionary<string, Texture> textures;
 
 	public readonly bool isValid = true;
 
@@ -95,9 +81,13 @@ public class MaterialDef
 
 		keywords = LoadDictionary<bool>(node.GetNode("Keyword"));
 		floats = LoadDictionary<float>(node.GetNode("Float"));
-		colors = LoadDictionary<Color>(node.GetNode("Color"), ParseColor);
+		colors = LoadDictionary<Color>(
+			node.GetNode("Color"),
+			value => ParseColor(value, out var color) ? (object)color : null);
 		vectors = LoadDictionary<Vector4>(node.GetNode("Vector"));
-		textureNames = LoadDictionary<string>(node.GetNode("Texture"));
+		textures = LoadDictionary<Texture>(
+			node.GetNode("Texture"),
+			value => GameDatabase.Instance.GetTexture(value, asNormalMap: false));
 	}
 
 	static readonly Func<Type, string, object> ReadValue =
@@ -114,7 +104,7 @@ public class MaterialDef
 			if (value is T parsed) {
 				items[item.name] = parsed;
 			} else {
-				Debug.LogError($"[Shabby][MaterialDef {name}] failed to parse property {item.name} = {item.value} as a {typeof(T).Name}");
+				Debug.LogError($"[Shabby][MaterialDef {name}] failed to load {typeof(T).Name} property {item.name} = {item.value}");
 			}
 		}
 
@@ -127,8 +117,6 @@ public class MaterialDef
 		if (ParseExtensions.TryParseColor(value, out color)) return true;
 		return false;
 	}
-
-	static object ParseColor(string value) => ParseColor(value, out var color) ? (object)color : null;
 
 	/// <summary>
 	/// Create a new material based on this definition. The material name is copied from the
@@ -161,25 +149,7 @@ public class MaterialDef
 
 		foreach (var kvp in vectors) material.SetVector(kvp.Key, kvp.Value);
 
-		foreach (var kvp in textureNames) {
-			var (propName, texName) = (kvp.Key, kvp.Value);
-			if (!textures.TryGetValue(texName, out var texture)) {
-				var texInfo = GameDatabase.Instance.GetTextureInfo(texName);
-				if (texInfo == null)
-				{
-					Debug.LogError($"[Shabby] failed to find texture {texName}");
-					continue;
-				}
-
-				MaterialDefLibrary.normalMapProperties.TryGetValue(material.shader.name, out var nrmPropName);
-				var isNormalMap = propName == (nrmPropName ?? "_BumpMap");
-
-				texture = isNormalMap ? texInfo.normalMap : texInfo.texture;
-				textures[texName] = texture;
-			}
-
-			material.SetTexture(propName, texture);
-		}
+		foreach (var kvp in textures) material.SetTexture(kvp.Key, kvp.Value);
 
 		return material;
 	}
