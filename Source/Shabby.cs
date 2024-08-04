@@ -104,7 +104,7 @@ namespace Shabby {
 					var iconShaderName = iconNode.GetValue("iconShader");
 					var iconShader = FindShader(iconShaderName ?? "");
 					if (string.IsNullOrEmpty(shader) || iconShader == null) {
-						Debug.Log($"[Shabby] invalid icon shader specification {shader} -> {iconShaderName}");
+						Debug.LogError($"[Shabby] invalid icon shader specification {shader} -> {iconShaderName}");
 					} else {
 						iconShaders[shader] = iconShader;
 					}

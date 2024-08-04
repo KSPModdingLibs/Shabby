@@ -22,6 +22,7 @@ using UnityEngine;
 
 namespace Shabby
 {
+
 public class ModelFilter
 {
 	public readonly HashSet<string> targetMaterials;

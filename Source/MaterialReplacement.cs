@@ -37,7 +37,7 @@ public class MaterialReplacement : ModelFilter
 			return;
 		}
 		if (!MaterialDefLibrary.items.TryGetValue(defName, out materialDef)) {
-			Debug.LogError($"[Shabby] failed to find material definition {defName}");
+			Debug.LogError($"[Shabby] failed to find valid material definition {defName}");
 		}
 	}
 

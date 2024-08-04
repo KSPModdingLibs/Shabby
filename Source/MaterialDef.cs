@@ -79,14 +79,14 @@ public class MaterialDef
 			isValid = false;
 		}
 
-		keywords = LoadDictionary<bool>(node.GetNode("Keyword"));
-		floats = LoadDictionary<float>(node.GetNode("Float"));
+		keywords = LoadDictionary<bool>(node, "KEYWORD");
+		floats = LoadDictionary<float>(node, "FLOAT");
 		colors = LoadDictionary<Color>(
-			node.GetNode("Color"),
+			node, "COLOR",
 			value => ParseColor(value, out var color) ? (object)color : null);
-		vectors = LoadDictionary<Vector4>(node.GetNode("Vector"));
+		vectors = LoadDictionary<Vector4>(node, "VECTOR");
 		textures = LoadDictionary<Texture>(
-			node.GetNode("Texture"),
+			node, "TEXTURE",
 			value => GameDatabase.Instance.GetTexture(value, asNormalMap: false));
 	}
 
@@ -94,20 +94,23 @@ public class MaterialDef
 		AccessTools.MethodDelegate<Func<Type, string, object>>(
 			AccessTools.DeclaredMethod(typeof(ConfigNode), "ReadValue"));
 
-	Dictionary<string, T> LoadDictionary<T>(ConfigNode node, Func<string, object> parser = null)
+	Dictionary<string, T> LoadDictionary<T>(ConfigNode defNode, string propKind, Func<string, object> parser = null)
 	{
 		var items = new Dictionary<string, T>();
-		if (node == null) return items;
 
-		foreach (ConfigNode.Value item in node.values) {
+		var propNode = defNode.GetNode(propKind);
+		if (propNode == null) return items;
+
+		foreach (ConfigNode.Value item in propNode.values) {
 			object value = parser != null ? parser(item.value) : ReadValue(typeof(T), item.value);
 			if (value is T parsed) {
 				items[item.name] = parsed;
 			} else {
-				Debug.LogError($"[Shabby][MaterialDef {name}] failed to load {typeof(T).Name} property {item.name} = {item.value}");
+				Debug.LogError($"[Shabby][MaterialDef {name}] failed to load {propKind} property {item.name} = {item.value}");
 			}
 		}
 
+		Debug.Log($"[Shabby][MaterialDef {name}] loaded {items.Count} {propKind} properties");
 		return items;
 	}
 
@@ -116,6 +119,13 @@ public class MaterialDef
 		if (ColorUtility.TryParseHtmlString(value, out color)) return true;
 		if (ParseExtensions.TryParseColor(value, out color)) return true;
 		return false;
+	}
+
+	static bool CheckProperty(Material mat, string propName)
+	{
+		var exists = mat.HasProperty(propName);
+		if (!exists) Debug.LogWarning($"[Shabby] shader {mat.shader.name} does not have property {propName}");
+		return exists;
 	}
 
 	/// <summary>
@@ -139,17 +149,26 @@ public class MaterialDef
 		if (preserveRenderQueue) material.renderQueue = referenceMaterial.renderQueue;
 
 		foreach (var kvp in keywords) {
+			if (!CheckProperty(material, kvp.Key)) continue;
 			if (kvp.Value) material.EnableKeyword(kvp.Key);
 			else material.DisableKeyword(kvp.Key);
 		}
 
-		foreach (var kvp in floats) material.SetFloat(kvp.Key, kvp.Value);
+		foreach (var kvp in floats) {
+			if (CheckProperty(material, kvp.Key)) material.SetFloat(kvp.Key, kvp.Value);
+		}
 
-		foreach (var kvp in colors) material.SetColor(kvp.Key, kvp.Value);
+		foreach (var kvp in colors) {
+			if (CheckProperty(material, kvp.Key)) material.SetColor(kvp.Key, kvp.Value);
+		}
 
-		foreach (var kvp in vectors) material.SetVector(kvp.Key, kvp.Value);
+		foreach (var kvp in vectors) {
+			if (CheckProperty(material, kvp.Key)) material.SetVector(kvp.Key, kvp.Value);
+		}
 
-		foreach (var kvp in textures) material.SetTexture(kvp.Key, kvp.Value);
+		foreach (var kvp in textures) {
+			if (CheckProperty(material, kvp.Key)) material.SetTexture(kvp.Key, kvp.Value);
+		}
 
 		return material;
 	}
