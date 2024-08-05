@@ -1,6 +1,7 @@
 .DS_Store
 *.dll
 *.dll.mdb
+*.pdb
 *.orig
 *.userprefs
 *.suo
@@ -17,3 +18,5 @@ bin
 *.DotSettings.user
 
 Assets/*.png
+KSP
+*.user
