@@ -15,4 +15,5 @@ jobs:
   build:
     uses: KSPModdingLibs/KSPBuildTools/.github/workflows/build.yml@main
     with:
-      dependency-identifiers: ${{ vars.DEPENDENCY_IDENTIFIERS }}
+      dependency-identifiers: |
+        Harmony2
