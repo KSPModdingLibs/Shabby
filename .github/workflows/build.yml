@@ -1,0 +1,18 @@
+name: build
+
+on:
+  push:
+    branches: [ "master" ]
+    paths:
+      - '**/*.cs'
+  pull_request:
+    paths:
+      - '**/*.cs'
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  build:
+    uses: KSPModdingLibs/KSPBuildTools/.github/workflows/build.yml@main
+    with:
+      dependency-identifiers: ${{ vars.DEPENDENCY_IDENTIFIERS }}
