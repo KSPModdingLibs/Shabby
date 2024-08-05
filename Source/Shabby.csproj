@@ -9,11 +9,12 @@
     <NoWarn>1701;1702;CS0649;CS1591</NoWarn>
     <AssemblyCopyright>2024 KSPModdingLibs Contributors</AssemblyCopyright>
     <AssemblyVersion Condition = "'$(AssemblyVersion)' == ''">99.9.9</AssemblyVersion>
+    <AssemblyName>Shabby</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
     <AssemblyAttribute Include="KSPAssembly">
-      <_Parameter1>Shabby</_Parameter1>
+      <_Parameter1>$(AssemblyName)</_Parameter1>
       <_Parameter2_IsLiteral>true</_Parameter2_IsLiteral>
       <_Parameter2>$(AssemblyVersion.Split('.')[0])</_Parameter2>
       <_Parameter3_IsLiteral>true</_Parameter3_IsLiteral>
