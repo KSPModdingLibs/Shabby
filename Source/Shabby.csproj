@@ -27,7 +27,7 @@
   
   <ItemGroup>
     <Reference Include="0Harmony, Culture=neutral, PublicKeyToken=null">
-      <HintPath>$(KSPRoot)GameData/000_Harmony/0Harmony.dll</HintPath>
+      <HintPath>$(KSPRoot)/GameData/000_Harmony/0Harmony.dll</HintPath>
     </Reference>
   </ItemGroup>
 </Project>
