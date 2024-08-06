@@ -14,6 +14,3 @@ on:
 jobs:
   build:
     uses: KSPModdingLibs/KSPBuildTools/.github/workflows/build.yml@main
-    with:
-      dependency-identifiers: |
-        Harmony2
