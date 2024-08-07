@@ -33,5 +33,5 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
-        git push
+        git push --set-upstream origin update-submodules
         
