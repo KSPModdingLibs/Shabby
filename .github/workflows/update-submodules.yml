@@ -1,0 +1,37 @@
+name: Update submodules
+
+on:
+  workflow_dispatch:
+
+jobs:
+  update-submodules:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash
+      
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+        
+    - name: update
+      run: |
+        git checkout -b update-submodules
+        git submodule update --init --recursive
+        git submodule update --recursive --remote
+
+    - name: commit
+      run: |
+        git config --global user.name "github-actions"
+        git config --global user.email "github-actions@github.com"
+        git commit -am "Update submodules"
+
+    - name: push
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        git push
+        
