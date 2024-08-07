@@ -1,0 +1,22 @@
+<#@ output extension="" #>
+<#@ parameter type="System.String" name="Version" #>
+<#@ parameter type="System.String" name="Build" #>
+{
+    "NAME":"Shabby",
+    "URL":"https://github.com/KSPModdingLibs/Shabby/releases/latest/download/Shabby.version",
+    "DOWNLOAD":"https://github.com/KSPModdingLibs/Shabby/releases/latest",
+    "VERSION": {
+        "MAJOR": <#= Version.Split('.')[0] #>,
+        "MINOR": <#= Version.Split('.')[1] #>,
+        "PATCH": <#= Version.Split('.')[2] #>,
+        "BUILD": <#= Build #>
+    },
+    "KSP_VERSION_MIN": {
+        "MAJOR":1,
+        "MINOR":8
+    },
+    "KSP_VERSION_MAX": {
+        "MAJOR":1,
+        "MINOR":12
+    }
+}

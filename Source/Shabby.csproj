@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="$(ProjectDir)../KSPBuildTools/KSPCommon.targets" />
 
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
@@ -8,7 +9,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <NoWarn>1701;1702;CS0649;CS1591</NoWarn>
     <AssemblyCopyright>2024 KSPModdingLibs Contributors</AssemblyCopyright>
-    <AssemblyVersion Condition = "'$(AssemblyVersion)' == ''">99.9.9</AssemblyVersion>
+    <AssemblyVersion Condition="'$(AssemblyVersion)' == ''">00.0.0</AssemblyVersion>
     <AssemblyName>Shabby</AssemblyName>
   </PropertyGroup>
 
@@ -23,13 +24,26 @@
       <_Parameter4>$(AssemblyVersion.Split('.')[2])</_Parameter4>
     </AssemblyAttribute>
   </ItemGroup>
-  
-  <Import Project="$(SolutionDir)KSPBuildTools/KSPCommon.targets"/>
-  
+
   <ItemGroup>
     <Reference Include="0Harmony, Culture=neutral, PublicKeyToken=null">
       <HintPath>$(KSPRoot)/GameData/000_Harmony/0Harmony.dll</HintPath>
       <CKANIdentifier>Harmony2</CKANIdentifier>
     </Reference>
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="T4.BuildTools" Version="3.0.0-preview-0027-g2711105671" />
+    <T4Transform Include="$(ProjectDir)Shabby.version.tt"/>
+    <T4Argument Include="Version" Value="$(AssemblyVersion)" />
+    <T4Argument Include="Build" Value="0" />
+  </ItemGroup>
+  <PropertyGroup>
+    <TransformOnBuild>True</TransformOnBuild>
+    <TransformOutOfDateOnly>False</TransformOutOfDateOnly>
+  </PropertyGroup>
+
+  <Target Name="MyCustomTarget" AfterTargets="TransformTemplatesCore">
+    <Move SourceFiles="Shabby.version.txt" DestinationFiles="$(ProjectDir)../GameData/Shabby/Shabby.version"/>
+  </Target>
 </Project>
