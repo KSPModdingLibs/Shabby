@@ -46,7 +46,11 @@ namespace Shabby
 	[KSPAddon(KSPAddon.Startup.Instantly, true)]
 	public class Shabby : MonoBehaviour
 	{
+		static Harmony harmony;
+
 		static Dictionary<string, Shader> loadedShaders;
+
+		public static readonly Dictionary<string, Shader> iconShaders = new Dictionary<string, Shader>();
 
 		static readonly Dictionary<string, Replacement> nameReplacements = new Dictionary<string, Replacement>();
 
@@ -88,17 +92,28 @@ namespace Shabby
 			return shader;
 		}
 
-		public static void ModuleManagerPostLoad()
+		public static void MMPostLoadCallback()
 		{
 			var configNodes = GameDatabase.Instance.GetConfigNodes("SHABBY");
 			foreach (var shabbyNode in configNodes) {
-				var replacementNodes = shabbyNode.GetNodes("REPLACE");
-				foreach (var replacementNode in replacementNodes) {
+				foreach (var replacementNode in shabbyNode.GetNodes("REPLACE")) {
 					Replacement replacement = new Replacement(replacementNode);
-
 					nameReplacements[replacement.name] = replacement;
 				}
+
+				foreach (var iconNode in shabbyNode.GetNodes("ICON_SHADER")) {
+					var shader = iconNode.GetValue("shader");
+					var iconShaderName = iconNode.GetValue("iconShader");
+					var iconShader = FindShader(iconShaderName ?? "");
+					if (string.IsNullOrEmpty(shader) || iconShader == null) {
+						Debug.LogError($"[Shabby] invalid icon shader specification {shader} -> {iconShaderName}");
+					} else {
+						iconShaders[shader] = iconShader;
+					}
+				}
 			}
+
+			MaterialDefLibrary.Load();
 		}
 
 		void Awake()
@@ -106,10 +121,17 @@ namespace Shabby
 			if (loadedShaders == null) {
 				loadedShaders = new Dictionary<string, Shader>();
 
-				var harmony = new Harmony("Shabby");
+				harmony = new Harmony("Shabby");
 				harmony.PatchAll(Assembly.GetExecutingAssembly());
 
 				Debug.Log($"[Shabby] hooked");
+
+				// Register as an explicit MM callback such that it is run before all reflected
+				// callbacks (as used by most mods), which may wish to access the MaterialDef library.
+				var addPostPatchCB = AccessTools.Method("ModuleManager.MMPatchLoader:AddPostPatchCallback");
+				var delegateType = addPostPatchCB.GetParameters()[0].ParameterType;
+				var callbackDelegate = Delegate.CreateDelegate(delegateType, typeof(Shabby), nameof(MMPostLoadCallback));
+				addPostPatchCB.Invoke(null, new object[] { callbackDelegate });
 			}
 		}
 
@@ -202,7 +224,6 @@ namespace Shabby
 #endif
 			}
 
-			Harmony harmony = new Harmony("Shabby");
 			MethodInfo callSiteTranspiler = AccessTools.Method(typeof(Shabby), nameof(Shabby.CallSiteTranspiler));
 
 			foreach (MethodBase callSite in callSites) {
