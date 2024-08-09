@@ -30,9 +30,6 @@
     <Exec Command="git rev-list $(RepoLatestTag)..HEAD --count" ConsoleToMsBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="RepoTagDistance"/>
     </Exec>
-    <ItemGroup>
-      <VersionSegments Include="$(RepoLatestTag.Split('.'))"/>
-    </ItemGroup>
 
     <!-- Infer the current version from this information -->
     <PropertyGroup>
@@ -40,7 +37,7 @@
       <VersionMinor>$(RepoLatestTag.Split('.')[1])</VersionMinor>
       <VersionPatch>$(RepoLatestTag.Split('.')[2])</VersionPatch>
       <VersionPatch Condition="$(RepoTagDistance) != '0'">$([MSBuild]::Add($(VersionPatch), 1))</VersionPatch>
-      <VersionBuild>$(RepoTagDistance)</VersionBuild>
+      <Build>$(RepoTagDistance)</Build>
       <Version>$(VersionMajor).$(VersionMinor).$(VersionPatch)</Version>
     </PropertyGroup>
 
@@ -57,7 +54,7 @@
         <_Parameter4>$(VersionPatch)</_Parameter4>
       </AssemblyAttribute>
       <AssemblyAttribute Include="System.Reflection.AssemblyVersionAttribute">
-        <_Parameter1>$(Version)</_Parameter1>
+        <_Parameter1>$(Version).$(Build)</_Parameter1>
       </AssemblyAttribute>
     </ItemGroup>
   </Target>
@@ -65,8 +62,7 @@
   <!-- Target to generate the .version file -->
   <!-- Depends on the Jinja2-CLI python package -->
   <Target Name="MakeVersionFile" AfterTargets="AfterBuild">
-    <Exec Command="jinja2 '$(ProjectDir)Shabby.version.template' -D 'Version=$(Version)' -D 'Build=$(RepoTagDistance)' -o '$(ProjectDir)../GameData/Shabby/Shabby.version' ''"/>
-    <Message Text="version is $(Version) in $(RepoVersionMajor)"/>
+    <Exec Command="jinja2 '$(ProjectDir)Shabby.version.template' -D 'Version=$(Version)' -D 'Build=$(Build)' -o '$(ProjectDir)../GameData/Shabby/Shabby.version' ''"/>
   </Target>
 
   <Import Project="$(ProjectDir)../KSPBuildTools/KSPCommon.targets" />
