@@ -10,7 +10,7 @@
     <NoWarn>1701;1702;CS0649;CS1591</NoWarn>
     <AssemblyCopyright>2024 KSPModdingLibs Contributors</AssemblyCopyright>
     <AssemblyName>Shabby</AssemblyName>
-    <GenerateAssemblyVersionAttribute> False </GenerateAssemblyVersionAttribute>
+    <GenerateAssemblyVersionAttribute>False</GenerateAssemblyVersionAttribute>
     <RepoRootPath>$(ProjectDir)../</RepoRootPath>
   </PropertyGroup>
 
@@ -22,12 +22,19 @@
     </Reference>
   </ItemGroup>
 
+  <!-- Version Files -->
+  <ItemGroup>
+    <VersionFile Include="$(RepoRootPath)Shabby.version">
+      <Destination>$(RepoRootPath)GameData/Shabby/Shabby.version</Destination>
+    </VersionFile>
+  </ItemGroup>
+
   <!-- Target to get information about the git repo -->
   <Target Name="GetVersionInfo" BeforeTargets="BeforeBuild">
-    <Exec Command="git describe --tags --abbrev=0" ConsoleToMsBuild="true">
+    <Exec Command="git describe --tags --abbrev=0" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="RepoLatestTag"/>
     </Exec>
-    <Exec Command="git rev-list $(RepoLatestTag)..HEAD --count" ConsoleToMsBuild="true">
+    <Exec Command="git rev-list $(RepoLatestTag)..HEAD --count" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="RepoTagDistance"/>
     </Exec>
 
@@ -60,10 +67,18 @@
   </Target>
 
   <!-- Target to generate the .version file -->
-  <!-- Depends on the Jinja2-CLI python package -->
-  <Target Name="MakeVersionFile" AfterTargets="AfterBuild">
-    <Exec Command="jinja2 '$(ProjectDir)Shabby.version.template' -D 'Version=$(Version)' -D 'Build=$(Build)' -o '$(ProjectDir)../GameData/Shabby/Shabby.version' ''"/>
+  <!-- Depends on the jq tool which comes included in the github actions environment and macOS 15 -->
+  <!-- Can be installed with Brew, Winget, or your linux package manager of choice -->
+  <Target Name="MakeVersionFiles" AfterTargets="AfterBuild">
+    <Exec Command= "cat '%(VersionFile.Identity)'\
+                    | jq '.VERSION = {
+                        MAJOR:$(VersionMajor),  
+                        MINOR:$(VersionMinor),
+                        PATCH:$(VersionPatch), 
+                        BUILD:$(Build) 
+                      }'\
+                    > '%(VersionFile.Destination)'" EchoOff="true"/>
   </Target>
 
-  <Import Project="$(ProjectDir)../KSPBuildTools/KSPCommon.targets" />
+  <Import Project="$(ProjectDir)../KSPBuildTools/KSPCommon.targets"/>
 </Project>

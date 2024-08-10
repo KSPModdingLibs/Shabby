@@ -10,13 +10,13 @@
 *.swp
 *.blend?
 *.pyc
-*.version
 build
 obj
 bin
-*.csproj.user
-*.DotSettings.user
-
-Assets/*.png
-KSP
 *.user
+
+# Output GameData package
+GameData
+
+# Dev KSP installation (if using)
+KSP
