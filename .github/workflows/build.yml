@@ -2,17 +2,50 @@ name: build
 
 on:
   push:
-    branches: [ "master" ]
-    paths:
-      - '**/*.cs'
   pull_request:
-    paths:
-      - '**/*.cs'
   workflow_dispatch:
   workflow_call:
 
 jobs:
   build:
-    uses: KSPModdingLibs/KSPBuildTools/.github/workflows/build.yml@main
-    with:
-      msbuild-dependency-target: CKANInstall
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Mod Repo
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install yaclog
+          yaclog show
+
+      - name: compile
+        uses: KSPModdingLibs/KSPBuildTools/.github/actions/compile@main
+        with:
+          ksp-zip-url: https://github.com/KSPModdingLibs/KSPLibs/raw/main/KSP-1.12.5.zip
+          msbuild-dependency-target: CKANInstall
+          solution-file-path: Shabby.sln
+
+      - name: assemble-release
+        uses: KSPModdingLibs/KSPBuildTools/.github/actions/assemble-release@main
+
+      - name: Publish to Github
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+        run: |
+          set -u
+          gh release create ${{ github.ref_name }} \
+            --notes "$(yaclog show -mb)" \
+            --title "$(yaclog show --name)" \
+            Shabby-*.zip \
+            Shabby-Release/GameData/Shabby/Shabby.version
+        # We publish both the mod AND the version file, that way there's always a static latest version file to compare against
+
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
