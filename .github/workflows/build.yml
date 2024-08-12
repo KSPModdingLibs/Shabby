@@ -27,14 +27,14 @@ jobs:
           yaclog show
 
       - name: compile
-        uses: KSPModdingLibs/KSPBuildTools/.github/actions/compile@main
+        uses: ./KSPBuildTools/.github/actions/compile
         with:
           ksp-zip-url: https://github.com/KSPModdingLibs/KSPLibs/raw/main/KSP-1.12.5.zip
           msbuild-dependency-target: CKANInstall
           solution-file-path: Shabby.sln
 
       - name: assemble-release
-        uses: KSPModdingLibs/KSPBuildTools/.github/actions/assemble-release@main
+        uses: ./KSPBuildTools/.github/actions/assemble-release
 
       - name: Publish to Github
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
