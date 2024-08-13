@@ -30,9 +30,9 @@ jobs:
         with:
           dotnet-version: 5.x
 
-      - uses: KSPModdingLibs/KSPBuildTools/.github/actions/ckan-setup@get-required-tools
+      - uses: drewcassidy/KSPBuildTools/.github/actions/ckan-setup@get-required-tools
 
-      - uses: KSPModdingLibs/KSPBuildTools/.github/actions/install-dependencies@get-required-tools
+      - uses: drewcassidy/KSPBuildTools/.github/actions/install-dependencies@get-required-tools
 
       - uses: drewcassidy/KSPBuildTools/.github/actions/compile@get-required-tools
         with:
