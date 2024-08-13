@@ -70,14 +70,12 @@
   <!-- Depends on the jq tool which comes included in the github actions environment and macOS 15 -->
   <!-- Can be installed with Brew, Winget, or your linux package manager of choice -->
   <Target Name="MakeVersionFiles" AfterTargets="AfterBuild">
-    <Exec Command= "cat '%(VersionFile.Identity)'\
-                    | jq '.VERSION = {
+    <Exec Command= "cat '%(VersionFile.Identity)' | jq '.VERSION = {
                         MAJOR:$(VersionMajor),  
                         MINOR:$(VersionMinor),
                         PATCH:$(VersionPatch), 
                         BUILD:$(Build) 
-                      }'\
-                    > '%(VersionFile.Destination)'" EchoOff="true"/>
+                      }' > '%(VersionFile.Destination)'" EchoOff="true"/>
   </Target>
 
   <Import Project="$(ProjectDir)../KSPBuildTools/KSPCommon.targets"/>
