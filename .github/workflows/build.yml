@@ -6,6 +6,10 @@ on:
   workflow_dispatch:
   workflow_call:
 
+env:
+  KSPRoot: /tmp/ksp
+  RELEASE_STAGING: /tmp/release
+
 jobs:
   build:
     runs-on: ubuntu-latest
