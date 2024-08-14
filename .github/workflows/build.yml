@@ -33,7 +33,7 @@ jobs:
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 5.x
+          dotnet-version: 6.x
 
       - uses: drewcassidy/KSPBuildTools/.github/actions/ckan-setup@get-required-tools
 
