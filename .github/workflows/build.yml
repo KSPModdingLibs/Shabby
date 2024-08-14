@@ -36,6 +36,8 @@ jobs:
           dotnet-version: 6.x
 
       - uses: drewcassidy/KSPBuildTools/.github/actions/ckan-setup@get-required-tools
+        with:
+          ckan-version: v1.34.3
 
       - uses: drewcassidy/KSPBuildTools/.github/actions/install-dependencies@get-required-tools
 
