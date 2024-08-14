@@ -12,6 +12,7 @@
     <AssemblyName>Shabby</AssemblyName>
     <GenerateAssemblyVersionAttribute>False</GenerateAssemblyVersionAttribute>
     <RepoRootPath>$(ProjectDir)../</RepoRootPath>
+    <StagingGameData></StagingGameData>
   </PropertyGroup>
 
   <!-- DLL Dependencies-->
@@ -66,10 +67,14 @@
     </ItemGroup>
   </Target>
 
+  <Target Name="MakeModDir" BeforeTargets="BeforeBuild">
+    <Exec Command="mkdir -p ../GameData/Shabby"/>
+  </Target>
+
   <!-- Target to generate the .version file -->
   <!-- Depends on the jq tool which comes included in the github actions environment and macOS 15 -->
   <!-- Can be installed with Brew, Winget, or your linux package manager of choice -->
-  <Target Name="MakeVersionFiles" AfterTargets="AfterBuild">
+  <Target Name="MakeVersionFiles" BeforeTargets="BeforeBuild" AfterTargets="MakeModDir">
     <Exec Command= "cat '%(VersionFile.Identity)' | jq '.VERSION = {
                         MAJOR:$(VersionMajor),  
                         MINOR:$(VersionMinor),
