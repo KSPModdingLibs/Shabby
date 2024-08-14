@@ -68,7 +68,7 @@
   </Target>
 
   <Target Name="MakeModDir" BeforeTargets="BeforeBuild">
-    <Exec Command="mkdir -p ../GameData/Shabby"/>
+    <MakeDir Directories="$(RepoRootPath)GameData/Shabby"/>
   </Target>
 
   <!-- Target to generate the .version file -->
