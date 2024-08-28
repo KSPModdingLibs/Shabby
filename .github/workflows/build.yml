@@ -7,7 +7,7 @@ on:
   workflow_call:
 
 env:
-  KSPRoot: /tmp/ksp
+  KSP_ROOT: /tmp/kspfoobar
   RELEASE_STAGING: /tmp/release
 
 jobs:
@@ -30,11 +30,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install yaclog
           yaclog show
-
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 6.x
-
+          
       - uses: drewcassidy/KSPBuildTools/.github/actions/setup-ckan@get-required-tools
 
       - uses: drewcassidy/KSPBuildTools/.github/actions/compile@get-required-tools
@@ -46,13 +42,11 @@ jobs:
       - name: Publish to Github
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
         run: |
-          set -u
           gh release create ${{ github.ref_name }} \
             --notes "$(yaclog show -mb)" \
             --title "$(yaclog show --name)" \
             Shabby-*.zip \
             Shabby-Release/GameData/Shabby/Shabby.version
         # We publish both the mod AND the version file, that way there's always a static latest version file to compare against
-
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
