@@ -26,7 +26,7 @@
 
   <!-- Version Files -->
   <ItemGroup>
-    <VersionFile Include="$(RepoRootPath)Shabby.version">
+    <VersionFile Include=".">
       <Destination>$(RepoRootPath)GameData/Shabby/Shabby.version</Destination>
     </VersionFile>
   </ItemGroup>
@@ -69,20 +69,8 @@
   </Target>
 
   <Target Name="MakeModDir" BeforeTargets="BeforeBuild">
-    <MakeDir Directories="$(RepoRootPath)GameData/Shabby"/>
+    <MakeDir Directories="$(RepoRootPath)GameData/Shabby" />
   </Target>
 
-  <!-- Target to generate the .version file -->
-  <!-- Depends on the jq tool which comes included in the github actions environment and macOS 15 -->
-  <!-- Can be installed with Brew, Winget, or your linux package manager of choice -->
-  <Target Name="MakeVersionFiles" BeforeTargets="BeforeBuild" AfterTargets="MakeModDir">
-    <Exec Command= "cat '%(VersionFile.Identity)' | jq '.VERSION = {
-                        MAJOR:$(VersionMajor),  
-                        MINOR:$(VersionMinor),
-                        PATCH:$(VersionPatch), 
-                        BUILD:$(Build) 
-                      }' > '%(VersionFile.Destination)'" EchoOff="true"/>
-  </Target>
-
-  <Import Project="$(ProjectDir)../KSPBuildTools/KSPCommon.targets"/>
+  <Import Project="$(ProjectDir)../KSPBuildTools/KSPCommon.targets" />
 </Project>
