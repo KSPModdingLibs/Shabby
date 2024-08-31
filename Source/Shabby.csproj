@@ -1,5 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
+  
+  <ItemGroup>
+    <PackageReference Include="GitVersion.MsBuild" Version="6.0.2">
+      <PrivateAssets>All</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
 
   <!-- Static Properties -->
   <PropertyGroup>
@@ -32,12 +38,12 @@
   </ItemGroup>
 
   <!-- Target to get information about the git repo -->
-  <Target Name="GetVersionInfo" BeforeTargets="BeforeBuild">
+  <Target Name="GetVersionInfo">
     <Exec Command="git describe --tags --abbrev=0" ConsoleToMSBuild="true">
-      <Output TaskParameter="ConsoleOutput" PropertyName="RepoLatestTag"/>
+      <Output TaskParameter="ConsoleOutput" PropertyName="RepoLatestTag" />
     </Exec>
     <Exec Command="git rev-list $(RepoLatestTag)..HEAD --count" ConsoleToMSBuild="true">
-      <Output TaskParameter="ConsoleOutput" PropertyName="RepoTagDistance"/>
+      <Output TaskParameter="ConsoleOutput" PropertyName="RepoTagDistance" />
     </Exec>
 
     <!-- Infer the current version from this information -->
