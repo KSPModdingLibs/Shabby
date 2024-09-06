@@ -7,7 +7,7 @@ on:
   workflow_call:
 
 env:
-  KSP_ROOT: /tmp/kspfoobar
+  KSP_ROOT: /tmp/ksp
   RELEASE_STAGING: /tmp/release
 
 jobs:
@@ -24,13 +24,13 @@ jobs:
         uses: drewcassidy/yaclog@1.4.3
         id: yaclog-show
 
-      - uses: drewcassidy/KSPBuildTools/.github/actions/setup-ckan@get-required-tools
+      - uses: KSPModdingLibs/KSPBuildTools/.github/actions/setup-ckan@0.0.2-alpha.0
 
-      - uses: drewcassidy/KSPBuildTools/.github/actions/compile@get-required-tools
+      - uses: KSPModdingLibs/KSPBuildTools/.github/actions/compile@0.0.2-alpha.0
         with:
           ksp-zip-url: https://github.com/KSPModdingLibs/KSPLibs/raw/main/KSP-1.12.5.zip
 
-      - uses: drewcassidy/KSPBuildTools/.github/actions/assemble-release@get-required-tools
+      - uses: KSPModdingLibs/KSPBuildTools/.github/actions/assemble-release@0.0.2-alpha.0
 
       - name: Publish to Github
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')

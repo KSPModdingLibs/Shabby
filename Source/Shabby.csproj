@@ -2,7 +2,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <PackageReference Include="KSPBuildTools" Version="0.0.0-*" /> 
+    <PackageReference Include="KSPBuildTools" Version="0.0.2-alpha.0" />
+    <PackageReference Include="MinVer" Version="5.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <!-- Static Properties -->
@@ -15,7 +19,6 @@
     <AssemblyCopyright>2024 KSPModdingLibs Contributors</AssemblyCopyright>
     <AssemblyName>Shabby</AssemblyName>
     <RepoRootPath>$(ProjectDir)../</RepoRootPath>
-    <StagingGameData></StagingGameData>
   </PropertyGroup>
 
   <!-- DLL Dependencies-->
@@ -35,13 +38,12 @@
 
   <!-- Version Files -->
   <ItemGroup>
-    <VersionFile Include=".">
+    <KSPVersionFile Include=".">
       <Destination>$(RepoRootPath)GameData/Shabby/Shabby.version</Destination>
-    </VersionFile>
+    </KSPVersionFile>
   </ItemGroup>
   
   <PropertyGroup>
-    <GetVersionFromGit>true</GetVersionFromGit>
     <GenerateKSPAssemblyAttribute>true</GenerateKSPAssemblyAttribute>
     <GenerateKSPAssemblyDependencyAttributes>true</GenerateKSPAssemblyDependencyAttributes>
   </PropertyGroup>
@@ -49,6 +51,4 @@
   <Target Name="MakeModDir" BeforeTargets="BeforeBuild">
     <MakeDir Directories="$(RepoRootPath)GameData/Shabby" />
   </Target>
-
-<!--  <Import Project="$(ProjectDir)../KSPBuildTools/KSPCommon.targets" />-->
 </Project>
