@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <PackageReference Include="KSPBuildTools" Version="0.0.2-alpha.0" />
+    <PackageReference Include="KSPBuildTools" Version="0.0.2-alpha.1" />
     <PackageReference Include="MinVer" Version="5.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
@@ -19,6 +19,8 @@
     <AssemblyCopyright>2024 KSPModdingLibs Contributors</AssemblyCopyright>
     <AssemblyName>Shabby</AssemblyName>
     <RepoRootPath>$(ProjectDir)../</RepoRootPath>
+    <GenerateKSPAssemblyAttribute>true</GenerateKSPAssemblyAttribute>
+    <GenerateKSPAssemblyDependencyAttributes>true</GenerateKSPAssemblyDependencyAttributes>
   </PropertyGroup>
 
   <!-- DLL Dependencies-->
@@ -26,12 +28,6 @@
     <Reference Include="0Harmony, Culture=neutral, PublicKeyToken=null">
       <HintPath>$(KSPRoot)/GameData/000_Harmony/0Harmony.dll</HintPath>
       <CKANIdentifier>Harmony2</CKANIdentifier>
-      <CKANVersion>2.2.1.0</CKANVersion>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="0Harmony, Culture=neutral, PublicKeyToken=null">
-      <HintPath>$(KSPRoot)/GameData/000_Harmony/0Harmony.dll</HintPath>
-      <CKANIdentifier>ModuleManager</CKANIdentifier>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
@@ -42,13 +38,4 @@
       <Destination>$(RepoRootPath)GameData/Shabby/Shabby.version</Destination>
     </KSPVersionFile>
   </ItemGroup>
-  
-  <PropertyGroup>
-    <GenerateKSPAssemblyAttribute>true</GenerateKSPAssemblyAttribute>
-    <GenerateKSPAssemblyDependencyAttributes>true</GenerateKSPAssemblyDependencyAttributes>
-  </PropertyGroup>
-  
-  <Target Name="MakeModDir" BeforeTargets="BeforeBuild">
-    <MakeDir Directories="$(RepoRootPath)GameData/Shabby" />
-  </Target>
 </Project>
