@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file
 
+## Unreleased
+
+Major build system refactor, and adoption by the KSPModdingLibs team.
+
+### Added
+
+- Added material-replacement functionality using the `SHABBY_MATERIAL_DEF` node
+
+
 ## 0.3.0 - 2022-08-03
 
 Add the rest of the main harmony distro
