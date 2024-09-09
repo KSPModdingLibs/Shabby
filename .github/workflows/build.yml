@@ -21,7 +21,7 @@ jobs:
           fetch-depth: 0 # get full history, not shallow clone
 
       - name: Get Changelog Information
-        uses: drewcassidy/yaclog@1.4.3
+        uses: drewcassidy/yaclog@1.4.4
         id: yaclog-show
 
       - uses: KSPModdingLibs/KSPBuildTools/.github/actions/setup-ckan@0.0.2-alpha.0
