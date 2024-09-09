@@ -1,2 +1,0 @@
--P ubuntu-latest=ghcr.io/catthehacker/ubuntu:custom-latest
---local-repository drewcassidy/KSPBuildTools@get-required-tools=./KSPBuildTools
