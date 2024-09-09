@@ -34,9 +34,11 @@ jobs:
         uses: drewcassidy/yaclog-ksp@1.0.4
         with:
           mod-name: Shabby
-          output-path: GameData/shabby-version.cfg
+          output-path: GameData/Shabby/shabby-version.cfg
 
       - uses: KSPModdingLibs/KSPBuildTools/.github/actions/assemble-release@0.0.2-alpha.0
+        with:
+          output-file-name: 'Shabby-${{ steps.yaclog-show.outputs.version}}'
 
       - name: Publish to Github
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
@@ -44,8 +46,8 @@ jobs:
           gh release create ${{ github.ref_name }}
           --notes-file "${{ steps.yaclog-show.outputs.body-file }}"
           --title "${{ steps.yaclog-show.outputs.name }}"
-          Shabby-*.zip \
-          Shabby-Release/GameData/Shabby/Shabby.version
+          Shabby*.zip 
+          GameData/Shabby/Shabby.version
         # We publish both the mod AND the version file, that way there's always a static latest version file to compare against
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
