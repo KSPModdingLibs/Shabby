@@ -1,8 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <!-- MSBuild Dependencies -->
   <ItemGroup>
-    <PackageReference Include="KSPBuildTools" Version="0.0.2-alpha.1" />
+    <PackageReference Include="KSPBuildTools" Version="0.0.2-alpha.2" />
     <PackageReference Include="MinVer" Version="5.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
@@ -36,6 +37,8 @@
   <ItemGroup>
     <KSPVersionFile Include=".">
       <Destination>$(RepoRootPath)GameData/Shabby/Shabby.version</Destination>
+      <URL>https://github.com/KSPModdingLibs/Shabby/releases/latest/download/Shabby.version</URL>
+      <Download>https://github.com/KSPModdingLibs/Shabby/releases/latest</Download>
     </KSPVersionFile>
   </ItemGroup>
 </Project>
