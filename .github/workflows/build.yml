@@ -30,6 +30,12 @@ jobs:
         with:
           ksp-zip-url: https://github.com/KSPModdingLibs/KSPLibs/raw/main/KSP-1.12.5.zip
 
+      - name: Generate KSP Changelog
+        uses: drewcassidy/yaclog-ksp@1.0.3
+        with:
+          mod-name: Shabby
+          output-path: GameData/shabby-version.cfg
+
       - uses: KSPModdingLibs/KSPBuildTools/.github/actions/assemble-release@0.0.2-alpha.0
 
       - name: Publish to Github
