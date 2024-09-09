@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file
 
-## Unreleased
+## 0.4.0 - 2024-09-09
 
 Major build system refactor, and adoption by the KSPModdingLibs team.
 
