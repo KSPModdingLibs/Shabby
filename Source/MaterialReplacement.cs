@@ -32,12 +32,12 @@ namespace Shabby
 		{
 			var defName = node.GetValue("materialDef");
 			if (string.IsNullOrEmpty(defName)) {
-				Debug.LogError("[Shabby] material replacement must reference a material definition");
+				Shabby.LogError("material replacement must reference a material definition");
 				return;
 			}
 
 			if (!MaterialDefLibrary.items.TryGetValue(defName, out materialDef)) {
-				Debug.LogError($"[Shabby] failed to find valid material definition {defName}");
+				Shabby.LogError($"failed to find valid material definition {defName}");
 			}
 		}
 
@@ -93,7 +93,7 @@ namespace Shabby
 			}
 
 			var replacementNames = string.Join(", ", replacements.Select(rep => rep.materialDef.name));
-			Debug.Log($"[Shabby] applied material replacements {replacementNames}");
+			Shabby.LogDebug($"applied material replacements {replacementNames}");
 		}
 	}
 }

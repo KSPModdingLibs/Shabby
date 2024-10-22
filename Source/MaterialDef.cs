@@ -18,6 +18,7 @@ along with Shabby.  If not, see
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using HarmonyLib;
 using UnityEngine;
 
@@ -32,7 +33,7 @@ namespace Shabby
 			foreach (var node in GameDatabase.Instance.GetConfigNodes("SHABBY_MATERIAL_DEF")) {
 				var def = new MaterialDef(node);
 				if (string.IsNullOrEmpty(def.name) || !def.isValid) {
-					Debug.LogError($"[Shabby][MaterialDef {def.name}] removing invalid definition");
+					Shabby.LogError($"[MaterialDef {def.name}] removing invalid definition");
 				} else {
 					items[def.name] = def;
 				}
@@ -64,20 +65,24 @@ namespace Shabby
 
 		public readonly bool isValid = true;
 
+		internal readonly string logPrefix;
+
 		public MaterialDef(ConfigNode node)
 		{
 			ConfigNode.LoadObjectFromConfig(this, node);
 
+			logPrefix = $"[Shabby][MaterialDef {name}] ";
+
 			if (shaderName != null) {
 				shader = Shabby.FindShader(shaderName);
 				if (shader == null) {
-					Debug.LogError($"[Shabby][MaterialDef {name}] failed to find shader {shaderName}");
+					LogError($"failed to find shader {shaderName}");
 					isValid = false;
 				}
 			}
 
 			if (!updateExisting && shader == null) {
-				Debug.LogError($"[Shabby][MaterialDef {name}] from-scratch material must define a valid shader");
+				LogError($"from-scratch material must define a valid shader");
 				isValid = false;
 			}
 
@@ -108,12 +113,12 @@ namespace Shabby
 				if (value is T parsed) {
 					items[item.name] = parsed;
 				} else {
-					Debug.LogError(
-						$"[Shabby][MaterialDef {name}] failed to load {propKind} property {item.name} = {item.value}");
+					LogError(
+						$"failed to load {propKind} property {item.name} = {item.value}");
 				}
 			}
 
-			Debug.Log($"[Shabby][MaterialDef {name}] loaded {items.Count} {propKind} properties");
+			Log($"loaded {items.Count} {propKind} properties");
 			return items;
 		}
 
@@ -127,7 +132,7 @@ namespace Shabby
 		static bool CheckProperty(Material mat, string propName)
 		{
 			var exists = mat.HasProperty(propName);
-			if (!exists) Debug.LogWarning($"[Shabby] shader {mat.shader.name} does not have property {propName}");
+			if (!exists) Shabby.LogWarning($"shader {mat.shader.name} does not have property {propName}");
 			return exists;
 		}
 
@@ -174,6 +179,18 @@ namespace Shabby
 			}
 
 			return material;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private void Log(string message)
+		{
+			Debug.Log(logPrefix + message);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private void LogError(string message)
+		{
+			Debug.LogError(logPrefix + message);
 		}
 	}
 }

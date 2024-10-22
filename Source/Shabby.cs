@@ -21,6 +21,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using HarmonyLib;
 using Mono.Cecil;
@@ -63,7 +64,7 @@ namespace Shabby
 		{
 			Shader shader;
 			if (loadedShaders.TryGetValue(shaderName, out shader)) {
-				Debug.Log($"[Shabby] custom shader: {shader.name}");
+				Log($"custom shader: {shader.name}");
 				return shader;
 			}
 
@@ -81,7 +82,7 @@ namespace Shabby
 				shader = FindLoadedShader(replacement.shader);
 
 				if (shader == null) {
-					Debug.LogError($"[Shabby] failed to find shader {replacement.shader} to replace {shaderName}");
+					LogError($"failed to find shader {replacement.shader} to replace {shaderName}");
 				}
 			}
 
@@ -106,7 +107,7 @@ namespace Shabby
 					var iconShaderName = iconNode.GetValue("iconShader");
 					var iconShader = FindShader(iconShaderName ?? "");
 					if (string.IsNullOrEmpty(shader) || iconShader == null) {
-						Debug.LogError($"[Shabby] invalid icon shader specification {shader} -> {iconShaderName}");
+						LogError($"invalid icon shader specification {shader} -> {iconShaderName}");
 					} else {
 						iconShaders[shader] = iconShader;
 					}
@@ -124,7 +125,7 @@ namespace Shabby
 				harmony = new Harmony("Shabby");
 				harmony.PatchAll(Assembly.GetExecutingAssembly());
 
-				Debug.Log($"[Shabby] hooked");
+				LogDebug("hooked");
 
 				// Register as an explicit MM callback such that it is run before all reflected
 				// callbacks (as used by most mods), which may wish to access the MaterialDef library.
@@ -148,7 +149,7 @@ namespace Shabby
 
 			List<MethodBase> callSites = new List<MethodBase>();
 
-			Debug.Log($"[Shabby]: Beginning search for callsites");
+			LogDebug("Beginning search for callsites");
 
 			// Don't use appdomain, we don't want to accidentally patch Unity itself and this avoid
 			// having to iterate on the BCL and Unity assemblies.
@@ -174,7 +175,7 @@ namespace Shabby
 								}
 							}
 						} catch (Exception ex) {
-							Debug.LogError($"[Shabby] excpetion while patching {method.Name}: {ex}");
+							LogError($"exception while patching {method.Name}: {ex}");
 						}
 					}
 				}
@@ -189,7 +190,7 @@ namespace Shabby
 					if (assemblyDef == null)
 						throw new FileLoadException($"Couldn't read assembly \"{kspAssembly.assembly.Location}\"");
 				} catch (Exception e) {
-					Debug.LogWarning($"[Shabby] Replace failed for assembly {kspAssembly.name}\n{e}");
+					LogWarning($"Replace failed for assembly {kspAssembly.name}\n{e}");
 					continue;
 				}
 
@@ -210,8 +211,8 @@ namespace Shabby
 										if (callSite == null)
 											throw new MemberAccessException();
 									} catch {
-										Debug.LogWarning(
-											$"[Shabby] Failed to patch method {assemblyDef.Name}::{typeDef.Name}.{methodDef.Name}");
+										LogWarning(
+											$"Failed to patch method {assemblyDef.Name}::{typeDef.Name}.{methodDef.Name}");
 										break;
 									}
 
@@ -233,8 +234,8 @@ namespace Shabby
 				if (callSite == mInfo_ShaderFind_Replacement)
 					continue;
 
-				Debug.Log(
-					$"[Shabby] Patching call site : {callSite.DeclaringType.Assembly.GetName().Name}::{callSite.DeclaringType}.{callSite.Name}");
+				Log(
+					$"Patching call site : {callSite.DeclaringType.Assembly.GetName().Name}::{callSite.DeclaringType}.{callSite.Name}");
 				harmony.Patch(callSite, null, null, new HarmonyMethod(callSiteTranspiler));
 			}
 		}
@@ -248,6 +249,32 @@ namespace Shabby
 
 				yield return instruction;
 			}
+		}
+
+		internal const string LogPrefix = "[Shabby] ";
+
+		[System.Diagnostics.Conditional("DEBUG")]
+		internal static void LogDebug(string message)
+		{
+			Debug.Log(LogPrefix + message);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static void Log(string message)
+		{
+			Debug.Log(LogPrefix + message);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static void LogWarning(string message)
+		{
+			Debug.LogWarning(LogPrefix + message);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static void LogError(string message)
+		{
+			Debug.LogError(LogPrefix + message);
 		}
 	}
 }

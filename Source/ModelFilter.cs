@@ -36,7 +36,7 @@ namespace Shabby
 			targetTransforms = node.GetValuesList("targetTransform").ToHashSet();
 
 			if (targetMaterials.Count > 0 && targetTransforms.Count > 0) {
-				Debug.LogError("[Shabby] model filter may not specify both materials and transforms");
+				Shabby.LogError("model filter may not specify both materials and transforms");
 				targetTransforms.Clear();
 			}
 

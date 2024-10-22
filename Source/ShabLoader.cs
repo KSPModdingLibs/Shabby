@@ -29,14 +29,14 @@ namespace Shabby
 	{
 		public override IEnumerator Load(UrlDir.UrlFile urlFile, FileInfo file)
 		{
-			Debug.Log($"[Shabby] `{urlFile.fullPath}'");
+			Shabby.Log($"loading '{urlFile.fullPath}'");
 			var bundle = AssetBundle.LoadFromFile(urlFile.fullPath);
 			if (!bundle) {
-				Debug.Log($"[Shabby] could not load {urlFile.fullPath}");
+				Shabby.LogWarning($"could not load {urlFile.fullPath}");
 			} else {
 				Shader[] shaders = bundle.LoadAllAssets<Shader>();
 				foreach (Shader shader in shaders) {
-					Debug.Log($"[Shabby] adding {shader.name}");
+					Shabby.LogDebug($"adding {shader.name}");
 					Shabby.AddShader(shader);
 				}
 			}

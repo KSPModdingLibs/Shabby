@@ -36,7 +36,7 @@ namespace Shabby
 		static Shader FindOverrideIconShader(Material material)
 		{
 			if (Shabby.iconShaders.TryGetValue(material.shader.name, out var shader)) {
-				Debug.Log($"[Shabby] custom icon shader {material.shader.name} -> {shader.name}");
+				Shabby.LogDebug($"custom icon shader {material.shader.name} -> {shader.name}");
 				return shader;
 			}
 
@@ -80,12 +80,12 @@ namespace Shabby
 					code[i].opcode = OpCodes.Ldloc_S;
 					code[i].operand = locMaterial;
 					code[i + 1].operand = mInfo_FindOverrideIconShader;
-					Debug.Log("[Shabby] patched part icon shader replacement");
+					Shabby.LogDebug("patched part icon shader replacement");
 					return code;
 				}
 			}
 
-			Debug.LogError("[Shabby] failed to patch part icon shader replacement");
+			Shabby.LogError("failed to patch part icon shader replacement");
 			return code;
 		}
 	}
