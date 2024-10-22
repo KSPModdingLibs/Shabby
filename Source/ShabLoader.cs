@@ -15,32 +15,33 @@ You should have received a copy of the GNU General Public License
 along with Shabby.  If not, see
 <http://www.gnu.org/licenses/>.
 */
+
 using System;
 using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Shabby {
-
-[DatabaseLoaderAttrib (new string [] {"shab"})]
-public class DatabaseLoaderTexture_SHAB : DatabaseLoader<GameDatabase.TextureInfo>
+namespace Shabby
 {
-	public override IEnumerator Load(UrlDir.UrlFile urlFile, FileInfo file)
+	[DatabaseLoaderAttrib(new string[] { "shab" })]
+	public class DatabaseLoaderTexture_SHAB : DatabaseLoader<GameDatabase.TextureInfo>
 	{
-		Debug.Log($"[Shabby] `{urlFile.fullPath}'");
-		var bundle = AssetBundle.LoadFromFile(urlFile.fullPath);
-		if (!bundle) {
-			Debug.Log($"[Shabby] could not load {urlFile.fullPath}");
-		} else {
-			Shader[] shaders = bundle.LoadAllAssets<Shader>();
-			foreach (Shader shader in shaders) {
-				Debug.Log($"[Shabby] adding {shader.name}");
-				Shabby.AddShader (shader);
+		public override IEnumerator Load(UrlDir.UrlFile urlFile, FileInfo file)
+		{
+			Debug.Log($"[Shabby] `{urlFile.fullPath}'");
+			var bundle = AssetBundle.LoadFromFile(urlFile.fullPath);
+			if (!bundle) {
+				Debug.Log($"[Shabby] could not load {urlFile.fullPath}");
+			} else {
+				Shader[] shaders = bundle.LoadAllAssets<Shader>();
+				foreach (Shader shader in shaders) {
+					Debug.Log($"[Shabby] adding {shader.name}");
+					Shabby.AddShader(shader);
+				}
 			}
-		}
-		yield break;
-	}
-}
 
+			yield break;
+		}
+	}
 }

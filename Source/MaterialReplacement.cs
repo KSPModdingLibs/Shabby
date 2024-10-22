@@ -23,76 +23,77 @@ using UnityEngine;
 
 namespace Shabby
 {
-
-public class MaterialReplacement : ModelFilter
-{
-	public readonly MaterialDef materialDef = null;
-	readonly Dictionary<Material, Material> replacedMaterials = new Dictionary<Material, Material>();
-
-	public MaterialReplacement(ConfigNode node) : base(node)
+	public class MaterialReplacement : ModelFilter
 	{
-		var defName = node.GetValue("materialDef");
-		if (string.IsNullOrEmpty(defName)) {
-			Debug.LogError("[Shabby] material replacement must reference a material definition");
-			return;
-		}
-		if (!MaterialDefLibrary.items.TryGetValue(defName, out materialDef)) {
-			Debug.LogError($"[Shabby] failed to find valid material definition {defName}");
-		}
-	}
+		public readonly MaterialDef materialDef = null;
+		readonly Dictionary<Material, Material> replacedMaterials = new Dictionary<Material, Material>();
 
-	public void ApplyToSharedMaterialIfNotIgnored(Renderer renderer)
-	{
-		if (MatchIgnored(renderer)) return;
-		var sharedMat = renderer.sharedMaterial;
-		if (!replacedMaterials.TryGetValue(sharedMat, out var replacementMat)) {
-			replacementMat = materialDef.Instantiate(sharedMat);
-			replacedMaterials[sharedMat] = replacementMat;
-		}
-		renderer.sharedMaterial = replacementMat;
-	}
-}
+		public MaterialReplacement(ConfigNode node) : base(node)
+		{
+			var defName = node.GetValue("materialDef");
+			if (string.IsNullOrEmpty(defName)) {
+				Debug.LogError("[Shabby] material replacement must reference a material definition");
+				return;
+			}
 
-[HarmonyPatch(typeof(PartLoader), "CompileModel")]
-class MaterialReplacementPatch
-{
-	static void Postfix(ref GameObject __result, ConfigNode partCfg)
-	{
-		const string replacementNodeName = "SHABBY_MATERIAL_REPLACE";
-		if (!partCfg.HasNode(replacementNodeName)) return;
-
-		var replacements = new List<MaterialReplacement>();
-		foreach (ConfigNode node in partCfg.nodes) {
-			if (node.name != replacementNodeName) continue;
-			var replacement = new MaterialReplacement(node);
-			if (replacement.materialDef != null) replacements.Add(replacement);
-		}
-
-		// Apply blanket replacements or material name replacements.
-		foreach (var renderer in __result.GetComponentsInChildren<Renderer>()) {
-			foreach (var replacement in replacements) {
-				if (!replacement.blanketApply && !replacement.MatchMaterial(renderer)) continue;
-				replacement.ApplyToSharedMaterialIfNotIgnored(renderer);
-				break;
+			if (!MaterialDefLibrary.items.TryGetValue(defName, out materialDef)) {
+				Debug.LogError($"[Shabby] failed to find valid material definition {defName}");
 			}
 		}
 
-		// Apply transform replacements.
-		if (replacements.Any(rep => rep.targetTransforms.Count > 0)) {
-			foreach (var transform in __result.GetComponentsInChildren<Transform>()) {
+		public void ApplyToSharedMaterialIfNotIgnored(Renderer renderer)
+		{
+			if (MatchIgnored(renderer)) return;
+			var sharedMat = renderer.sharedMaterial;
+			if (!replacedMaterials.TryGetValue(sharedMat, out var replacementMat)) {
+				replacementMat = materialDef.Instantiate(sharedMat);
+				replacedMaterials[sharedMat] = replacementMat;
+			}
+
+			renderer.sharedMaterial = replacementMat;
+		}
+	}
+
+	[HarmonyPatch(typeof(PartLoader), "CompileModel")]
+	class MaterialReplacementPatch
+	{
+		static void Postfix(ref GameObject __result, ConfigNode partCfg)
+		{
+			const string replacementNodeName = "SHABBY_MATERIAL_REPLACE";
+			if (!partCfg.HasNode(replacementNodeName)) return;
+
+			var replacements = new List<MaterialReplacement>();
+			foreach (ConfigNode node in partCfg.nodes) {
+				if (node.name != replacementNodeName) continue;
+				var replacement = new MaterialReplacement(node);
+				if (replacement.materialDef != null) replacements.Add(replacement);
+			}
+
+			// Apply blanket replacements or material name replacements.
+			foreach (var renderer in __result.GetComponentsInChildren<Renderer>()) {
 				foreach (var replacement in replacements) {
-					if (!replacement.MatchTransform(transform)) continue;
-					foreach (var renderer in transform.GetComponentsInChildren<Renderer>()) {
-						replacement.ApplyToSharedMaterialIfNotIgnored(renderer);
-					}
+					if (!replacement.blanketApply && !replacement.MatchMaterial(renderer)) continue;
+					replacement.ApplyToSharedMaterialIfNotIgnored(renderer);
 					break;
 				}
 			}
+
+			// Apply transform replacements.
+			if (replacements.Any(rep => rep.targetTransforms.Count > 0)) {
+				foreach (var transform in __result.GetComponentsInChildren<Transform>()) {
+					foreach (var replacement in replacements) {
+						if (!replacement.MatchTransform(transform)) continue;
+						foreach (var renderer in transform.GetComponentsInChildren<Renderer>()) {
+							replacement.ApplyToSharedMaterialIfNotIgnored(renderer);
+						}
+
+						break;
+					}
+				}
+			}
+
+			var replacementNames = string.Join(", ", replacements.Select(rep => rep.materialDef.name));
+			Debug.Log($"[Shabby] applied material replacements {replacementNames}");
 		}
-
-		var replacementNames = string.Join(", ", replacements.Select(rep => rep.materialDef.name));
-		Debug.Log($"[Shabby] applied material replacements {replacementNames}");
 	}
-}
-
 }

@@ -130,7 +130,8 @@ namespace Shabby
 				// callbacks (as used by most mods), which may wish to access the MaterialDef library.
 				var addPostPatchCB = AccessTools.Method("ModuleManager.MMPatchLoader:AddPostPatchCallback");
 				var delegateType = addPostPatchCB.GetParameters()[0].ParameterType;
-				var callbackDelegate = Delegate.CreateDelegate(delegateType, typeof(Shabby), nameof(MMPostLoadCallback));
+				var callbackDelegate =
+					Delegate.CreateDelegate(delegateType, typeof(Shabby), nameof(MMPostLoadCallback));
 				addPostPatchCB.Invoke(null, new object[] { callbackDelegate });
 			}
 		}
@@ -158,7 +159,8 @@ namespace Shabby
 // alternative implementation using Harmony instead of Cecil, but this is like 4x slower
 #if false
 				foreach (var type in kspAssembly.assembly.GetTypes()) {
-					var methods = type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly);
+					var methods =
+ type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly);
 					foreach (var method in methods) {
 						try {
 							if (method.HasMethodBody() && !method.ContainsGenericParameters && !method.IsGenericMethod) {
@@ -199,8 +201,8 @@ namespace Shabby
 
 							foreach (Instruction instruction in methodDef.Body.Instructions) {
 								if (instruction.OpCode.Code == Code.Call
-									&& instruction.Operand is MethodReference mRef
-									&& mRef.FullName == cecilMethodName) {
+								    && instruction.Operand is MethodReference mRef
+								    && mRef.FullName == cecilMethodName) {
 									MethodBase callSite;
 									try {
 										callSite = methodDef.ResolveReflection();
@@ -208,7 +210,8 @@ namespace Shabby
 										if (callSite == null)
 											throw new MemberAccessException();
 									} catch {
-										Debug.LogWarning($"[Shabby] Failed to patch method {assemblyDef.Name}::{typeDef.Name}.{methodDef.Name}");
+										Debug.LogWarning(
+											$"[Shabby] Failed to patch method {assemblyDef.Name}::{typeDef.Name}.{methodDef.Name}");
 										break;
 									}
 
@@ -230,7 +233,8 @@ namespace Shabby
 				if (callSite == mInfo_ShaderFind_Replacement)
 					continue;
 
-				Debug.Log($"[Shabby] Patching call site : {callSite.DeclaringType.Assembly.GetName().Name}::{callSite.DeclaringType}.{callSite.Name}");
+				Debug.Log(
+					$"[Shabby] Patching call site : {callSite.DeclaringType.Assembly.GetName().Name}::{callSite.DeclaringType}.{callSite.Name}");
 				harmony.Patch(callSite, null, null, new HarmonyMethod(callSiteTranspiler));
 			}
 		}
@@ -238,7 +242,8 @@ namespace Shabby
 		static IEnumerable<CodeInstruction> CallSiteTranspiler(IEnumerable<CodeInstruction> instructions)
 		{
 			foreach (CodeInstruction instruction in instructions) {
-				if (instruction.opcode == OpCodes.Call && ReferenceEquals(instruction.operand, mInfo_ShaderFind_Original))
+				if (instruction.opcode == OpCodes.Call &&
+				    ReferenceEquals(instruction.operand, mInfo_ShaderFind_Original))
 					instruction.operand = mInfo_ShaderFind_Replacement;
 
 				yield return instruction;
