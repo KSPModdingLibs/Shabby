@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using HarmonyLib;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Shabby
 {
@@ -147,7 +148,7 @@ namespace Shabby
 
 			Material material;
 			if (updateExisting) {
-				material = new Material(referenceMaterial);
+				material = Object.Instantiate(referenceMaterial);
 				if (shader != null) material.shader = shader;
 			} else {
 				material = new Material(shader) { name = referenceMaterial.name };
