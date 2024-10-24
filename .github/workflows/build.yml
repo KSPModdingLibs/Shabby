@@ -21,25 +21,25 @@ jobs:
           fetch-depth: 0 # get full history, not shallow clone
 
       - name: Get Changelog Information
-        uses: drewcassidy/yaclog@1.4.4
+        uses: drewcassidy/yaclog@1.5.0
         id: yaclog-show
 
-      - uses: KSPModdingLibs/KSPBuildTools/.github/actions/setup-ckan@0.0.2-alpha.4
+      - uses: KSPModdingLibs/KSPBuildTools/.github/actions/setup-ckan@0.0.2
 
-      - uses: KSPModdingLibs/KSPBuildTools/.github/actions/compile@0.0.2-alpha.4
+      - uses: KSPModdingLibs/KSPBuildTools/.github/actions/compile@0.0.2
         with:
           ksp-zip-url: https://github.com/KSPModdingLibs/KSPLibs/raw/main/KSP-1.12.5.zip
 
       - name: Generate KSP Changelog
-        uses: drewcassidy/yaclog-ksp@1.0.4
+        uses: drewcassidy/yaclog-ksp@1.2.0
         with:
           mod-name: Shabby
           output-path: GameData/Shabby/shabby-version.cfg
 
-      - uses: KSPModdingLibs/KSPBuildTools/.github/actions/assemble-release@0.0.2-alpha.4
+      - uses: KSPModdingLibs/KSPBuildTools/.github/actions/assemble-release@0.0.2
         id: assemble-release
         with:
-          output-file-name: 'Shabby-${{ steps.yaclog-show.outputs.version}}'
+          output-file-name: 'Shabby'
 
       - name: Publish to Github
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')

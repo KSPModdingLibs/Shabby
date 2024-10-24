@@ -3,7 +3,7 @@
 
   <!-- MSBuild Dependencies -->
   <ItemGroup>
-    <PackageReference Include="KSPBuildTools" Version="0.0.2-alpha.7" />
+    <PackageReference Include="KSPBuildTools" Version="0.0.2" />
     <PackageReference Include="MinVer" Version="5.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
