@@ -19,6 +19,7 @@ along with Shabby.  If not, see
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
+using KSPBuildTools;
 using UnityEngine;
 
 namespace Shabby
@@ -32,12 +33,12 @@ namespace Shabby
 		{
 			var defName = node.GetValue("materialDef");
 			if (string.IsNullOrEmpty(defName)) {
-				Shabby.LogError("material replacement must reference a material definition");
+				Log.Error("material replacement must reference a material definition");
 				return;
 			}
 
 			if (!MaterialDefLibrary.items.TryGetValue(defName, out materialDef)) {
-				Shabby.LogError($"failed to find valid material definition {defName}");
+				Log.Error($"failed to find valid material definition {defName}");
 			}
 		}
 
@@ -93,7 +94,7 @@ namespace Shabby
 			}
 
 			var replacementNames = string.Join(", ", replacements.Select(rep => rep.materialDef.name));
-			Shabby.LogDebug($"applied material replacements {replacementNames}");
+			Log.Debug($"applied material replacements {replacementNames}");
 		}
 	}
 }

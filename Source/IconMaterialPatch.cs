@@ -21,6 +21,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
+using KSPBuildTools;
 using UnityEngine;
 
 namespace Shabby
@@ -36,7 +37,7 @@ namespace Shabby
 		static Shader FindOverrideIconShader(Material material)
 		{
 			if (Shabby.iconShaders.TryGetValue(material.shader.name, out var shader)) {
-				Shabby.LogDebug($"custom icon shader {material.shader.name} -> {shader.name}");
+				Log.Debug($"custom icon shader {material.shader.name} -> {shader.name}");
 				return shader;
 			}
 
@@ -80,12 +81,12 @@ namespace Shabby
 					code[i].opcode = OpCodes.Ldloc_S;
 					code[i].operand = locMaterial;
 					code[i + 1].operand = mInfo_FindOverrideIconShader;
-					Shabby.LogDebug("patched part icon shader replacement");
+					Log.Debug("patched part icon shader replacement");
 					return code;
 				}
 			}
 
-			Shabby.LogError("failed to patch part icon shader replacement");
+			Log.Error("failed to patch part icon shader replacement");
 			return code;
 		}
 	}

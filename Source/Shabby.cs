@@ -24,6 +24,7 @@ using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using HarmonyLib;
+using KSPBuildTools;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
@@ -64,7 +65,7 @@ namespace Shabby
 		{
 			Shader shader;
 			if (loadedShaders.TryGetValue(shaderName, out shader)) {
-				Log($"custom shader: {shader.name}");
+				Log.Message($"custom shader: {shader.name}");
 				return shader;
 			}
 
@@ -82,7 +83,7 @@ namespace Shabby
 				shader = FindLoadedShader(replacement.shader);
 
 				if (shader == null) {
-					LogError($"failed to find shader {replacement.shader} to replace {shaderName}");
+					Log.Error($"failed to find shader {replacement.shader} to replace {shaderName}");
 				}
 			}
 
@@ -107,7 +108,7 @@ namespace Shabby
 					var iconShaderName = iconNode.GetValue("iconShader");
 					var iconShader = FindShader(iconShaderName ?? "");
 					if (string.IsNullOrEmpty(shader) || iconShader == null) {
-						LogError($"invalid icon shader specification {shader} -> {iconShaderName}");
+						Log.Error($"invalid icon shader specification {shader} -> {iconShaderName}");
 					} else {
 						iconShaders[shader] = iconShader;
 					}
@@ -119,13 +120,14 @@ namespace Shabby
 
 		void Awake()
 		{
+			Debug.Log("Test context (shibboleth)", this);
 			if (loadedShaders == null) {
 				loadedShaders = new Dictionary<string, Shader>();
 
 				harmony = new Harmony("Shabby");
 				harmony.PatchAll(Assembly.GetExecutingAssembly());
 
-				LogDebug("hooked");
+				Log.Debug("hooked");
 
 				// Register as an explicit MM callback such that it is run before all reflected
 				// callbacks (as used by most mods), which may wish to access the MaterialDef library.
@@ -149,7 +151,7 @@ namespace Shabby
 
 			List<MethodBase> callSites = new List<MethodBase>();
 
-			LogDebug("Beginning search for callsites");
+			Log.Debug("Beginning search for callsites");
 
 			// Don't use appdomain, we don't want to accidentally patch Unity itself and this avoid
 			// having to iterate on the BCL and Unity assemblies.
@@ -190,7 +192,7 @@ namespace Shabby
 					if (assemblyDef == null)
 						throw new FileLoadException($"Couldn't read assembly \"{kspAssembly.assembly.Location}\"");
 				} catch (Exception e) {
-					LogWarning($"Replace failed for assembly {kspAssembly.name}\n{e}");
+					Log.Warning($"Replace failed for assembly {kspAssembly.name}\n{e}");
 					continue;
 				}
 
@@ -211,7 +213,7 @@ namespace Shabby
 										if (callSite == null)
 											throw new MemberAccessException();
 									} catch {
-										LogWarning(
+										Log.Warning(
 											$"Failed to patch method {assemblyDef.Name}::{typeDef.Name}.{methodDef.Name}");
 										break;
 									}
@@ -234,7 +236,7 @@ namespace Shabby
 				if (callSite == mInfo_ShaderFind_Replacement)
 					continue;
 
-				Log(
+				Log.Debug(
 					$"Patching call site : {callSite.DeclaringType.Assembly.GetName().Name}::{callSite.DeclaringType}.{callSite.Name}");
 				harmony.Patch(callSite, null, null, new HarmonyMethod(callSiteTranspiler));
 			}
@@ -249,32 +251,6 @@ namespace Shabby
 
 				yield return instruction;
 			}
-		}
-
-		internal const string LogPrefix = "[Shabby] ";
-
-		[System.Diagnostics.Conditional("DEBUG")]
-		internal static void LogDebug(string message)
-		{
-			Debug.Log(LogPrefix + message);
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static void Log(string message)
-		{
-			Debug.Log(LogPrefix + message);
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static void LogWarning(string message)
-		{
-			Debug.LogWarning(LogPrefix + message);
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static void LogError(string message)
-		{
-			Debug.LogError(LogPrefix + message);
 		}
 	}
 }

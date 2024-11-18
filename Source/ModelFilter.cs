@@ -18,6 +18,7 @@ along with Shabby.  If not, see
 
 using System.Collections.Generic;
 using System.Linq;
+using KSPBuildTools;
 using UnityEngine;
 
 namespace Shabby
@@ -36,7 +37,7 @@ namespace Shabby
 			targetTransforms = node.GetValuesList("targetTransform").ToHashSet();
 
 			if (targetMaterials.Count > 0 && targetTransforms.Count > 0) {
-				Shabby.LogError("model filter may not specify both materials and transforms");
+				Log.Error("model filter may not specify both materials and transforms");
 				targetTransforms.Clear();
 			}
 

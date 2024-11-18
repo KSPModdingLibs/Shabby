@@ -3,7 +3,7 @@
 
   <!-- MSBuild Dependencies -->
   <ItemGroup>
-    <PackageReference Include="KSPBuildTools" Version="0.0.2" />
+    <PackageReference Include="KSPBuildTools" Version="0.0.3-*"/>
     <PackageReference Include="MinVer" Version="5.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
@@ -11,6 +11,10 @@
   </ItemGroup>
 
   <!-- Static Properties -->
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
     <LangVersion>7.3</LangVersion>

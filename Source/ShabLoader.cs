@@ -20,6 +20,7 @@ using System;
 using System.IO;
 using System.Collections;
 using System.Collections.Generic;
+using KSPBuildTools;
 using UnityEngine;
 
 namespace Shabby
@@ -29,14 +30,14 @@ namespace Shabby
 	{
 		public override IEnumerator Load(UrlDir.UrlFile urlFile, FileInfo file)
 		{
-			Shabby.Log($"loading '{urlFile.fullPath}'");
+			Log.Message($"loading '{urlFile.fullPath}'");
 			var bundle = AssetBundle.LoadFromFile(urlFile.fullPath);
 			if (!bundle) {
-				Shabby.LogWarning($"could not load {urlFile.fullPath}");
+				Log.Warning($"could not load {urlFile.fullPath}");
 			} else {
 				Shader[] shaders = bundle.LoadAllAssets<Shader>();
 				foreach (Shader shader in shaders) {
-					Shabby.LogDebug($"adding {shader.name}");
+					Log.Debug($"adding {shader.name}");
 					Shabby.AddShader(shader);
 				}
 			}

@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using HarmonyLib;
 using UnityEngine;
+using KSPBuildTools;
 
 namespace Shabby
 {
@@ -33,7 +34,7 @@ namespace Shabby
 			foreach (var node in GameDatabase.Instance.GetConfigNodes("SHABBY_MATERIAL_DEF")) {
 				var def = new MaterialDef(node);
 				if (string.IsNullOrEmpty(def.name) || !def.isValid) {
-					Shabby.LogError($"[MaterialDef {def.name}] removing invalid definition");
+					Log.Error($"[MaterialDef {def.name}] removing invalid definition");
 				} else {
 					items[def.name] = def;
 				}
@@ -41,7 +42,7 @@ namespace Shabby
 		}
 	}
 
-	public class MaterialDef
+	public class MaterialDef : ILogContextProvider
 	{
 		[Persistent] public string name;
 
@@ -76,13 +77,13 @@ namespace Shabby
 			if (shaderName != null) {
 				shader = Shabby.FindShader(shaderName);
 				if (shader == null) {
-					LogError($"failed to find shader {shaderName}");
+					this.LogError($"failed to find shader {shaderName}");
 					isValid = false;
 				}
 			}
 
 			if (!updateExisting && shader == null) {
-				LogError($"from-scratch material must define a valid shader");
+				this.LogError($"from-scratch material must define a valid shader");
 				isValid = false;
 			}
 
@@ -113,12 +114,12 @@ namespace Shabby
 				if (value is T parsed) {
 					items[item.name] = parsed;
 				} else {
-					LogError(
+					this.LogError(
 						$"failed to load {propKind} property {item.name} = {item.value}");
 				}
 			}
 
-			Log($"loaded {items.Count} {propKind} properties");
+			this.LogMessage($"loaded {items.Count} {propKind} properties");
 			return items;
 		}
 
@@ -132,7 +133,7 @@ namespace Shabby
 		static bool CheckProperty(Material mat, string propName)
 		{
 			var exists = mat.HasProperty(propName);
-			if (!exists) Shabby.LogWarning($"shader {mat.shader.name} does not have property {propName}");
+			if (!exists) Log.Warning($"shader {mat.shader.name} does not have property {propName}");
 			return exists;
 		}
 
@@ -181,16 +182,9 @@ namespace Shabby
 			return material;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private void Log(string message)
+		public string context()
 		{
-			Debug.Log(logPrefix + message);
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private void LogError(string message)
-		{
-			Debug.LogError(logPrefix + message);
+			return name;
 		}
 	}
 }
