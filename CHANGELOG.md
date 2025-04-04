@@ -2,11 +2,12 @@
 
 All notable changes to this project will be documented in this file
 
-## Unreleased
+## 0.4.1 - 2025-04-04
 
 - Gracefully handle failing to patch a Shader.Find callsite (usually in generic methods).  Specifically this would occur with KRPC and cause any further patches to be skipped.
 - Change several spammy log messages to be debug-only
 - Skip applying material replacements to renderers that don't have a sharedMaterial (some ParticleSystemRenderers apparently)
+
 
 ## 0.4.0 - 2024-09-09
 
