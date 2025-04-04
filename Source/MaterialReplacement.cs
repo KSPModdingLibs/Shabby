@@ -46,6 +46,7 @@ namespace Shabby
 		{
 			if (MatchIgnored(renderer)) return;
 			var sharedMat = renderer.sharedMaterial;
+			if (sharedMat == null) return;
 			if (!replacedMaterials.TryGetValue(sharedMat, out var replacementMat)) {
 				replacementMat = materialDef.Instantiate(sharedMat);
 				replacedMaterials[sharedMat] = replacementMat;
