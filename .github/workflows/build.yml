@@ -47,7 +47,7 @@ jobs:
           gh release create ${{ github.ref_name }}
           --notes-file "${{ steps.yaclog-show.outputs.body-file }}"
           --title "${{ steps.yaclog-show.outputs.name }}"
-          ${{ steps.assemble-release.outputs.artifact-path }}
+          ${{ steps.assemble-release.outputs.artifact-path }}.zip
           GameData/Shabby/Shabby.version
         # We publish both the mod AND the version file, that way there's always a static latest version file to compare against
         env:
