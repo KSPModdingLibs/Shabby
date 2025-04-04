@@ -236,9 +236,12 @@ namespace Shabby
 				if (callSite == mInfo_ShaderFind_Replacement)
 					continue;
 
-				Log.Debug(
-					$"Patching call site : {callSite.DeclaringType.Assembly.GetName().Name}::{callSite.DeclaringType}.{callSite.Name}");
-				harmony.Patch(callSite, null, null, new HarmonyMethod(callSiteTranspiler));
+				try {
+					harmony.Patch(callSite, null, null, new HarmonyMethod(callSiteTranspiler));
+					Log.Debug($"Patching call site : {callSite.DeclaringType.Assembly.GetName().Name}::{callSite.DeclaringType}.{callSite.Name}");
+				} catch (Exception e) {
+					Log.Warning($"Failed to patch call site : {callSite.DeclaringType.Assembly.GetName().Name}::{callSite.DeclaringType}.{callSite.Name}\n{e.Message}\n{e.StackTrace}");
+				}
 			}
 		}
 
