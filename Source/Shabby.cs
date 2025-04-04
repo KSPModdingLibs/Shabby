@@ -65,7 +65,7 @@ namespace Shabby
 		{
 			Shader shader;
 			if (loadedShaders.TryGetValue(shaderName, out shader)) {
-				Log.Message($"custom shader: {shader.name}");
+				Log.Debug($"custom shader: {shader.name}");
 				return shader;
 			}
 
