@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file
 
+## 0.4.2 - 2025-05-26
+
+- Fix loading of custom icon shaders with KSPCF v1.37+ installed
+
+
 ## 0.4.1 - 2025-04-04
 
 - Gracefully handle failing to patch a Shader.Find callsite (usually in generic methods).  Specifically this would occur with KRPC and cause any further patches to be skipped.
