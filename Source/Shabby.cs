@@ -95,6 +95,13 @@ namespace Shabby
 			return shader;
 		}
 
+		public static Shader TryFindIconShader(string shaderName)
+		{
+			if (!iconShaders.TryGetValue(shaderName, out var iconShader)) return null;
+			Log.Debug($"custom icon shader {shaderName} -> {iconShader.name}");
+			return iconShader;
+		}
+
 		public static void MMPostLoadCallback()
 		{
 			var configNodes = GameDatabase.Instance.GetConfigNodes("SHABBY");

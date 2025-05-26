@@ -34,15 +34,8 @@ namespace Shabby
 		static MethodInfo mInfo_FindOverrideIconShader =
 			AccessTools.Method(typeof(SetPartIconMaterialsPatch), nameof(FindOverrideIconShader));
 
-		static Shader FindOverrideIconShader(Material material)
-		{
-			if (Shabby.iconShaders.TryGetValue(material.shader.name, out var shader)) {
-				Log.Debug($"custom icon shader {material.shader.name} -> {shader.name}");
-				return shader;
-			}
-
-			return Shabby.FindShader("KSP/ScreenSpaceMask");
-		}
+		static Shader FindOverrideIconShader(Material material) =>
+			Shabby.TryFindIconShader(material.shader.name) ?? Shabby.FindShader("KSP/ScreenSpaceMask");
 
 		/// <summary>
 		/// The stock method iterates through every material in the icon prefab and replaces some
@@ -87,6 +80,21 @@ namespace Shabby
 
 			Log.Error("failed to patch part icon shader replacement");
 			return code;
+		}
+	}
+
+	[HarmonyPatch(TargetType, "GetIconShader")]
+	class KSPCFGetIconShaderPatch
+	{
+		const string TargetType = "KSPCommunityFixes.Performance.PartParsingPerf";
+
+		static bool Prepare() => AccessTools.TypeByName(TargetType) != null;
+
+		static void Postfix(string materialShaderName, ref Shader __result)
+		{
+			if (__result.name != "KSP/ScreenSpaceMask") return;
+			if (Shabby.TryFindIconShader(materialShaderName) is not Shader iconShader) return;
+			__result = iconShader;
 		}
 	}
 }
