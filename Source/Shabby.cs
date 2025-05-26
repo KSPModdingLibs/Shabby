@@ -19,6 +19,7 @@ along with Shabby.  If not, see
 using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
@@ -120,14 +121,20 @@ namespace Shabby
 
 		void Awake()
 		{
-			Debug.Log("Test context (shibboleth)", this);
 			if (loadedShaders == null) {
 				loadedShaders = new Dictionary<string, Shader>();
 
 				harmony = new Harmony("Shabby");
-				harmony.PatchAll(Assembly.GetExecutingAssembly());
-
-				Log.Debug("hooked");
+				Log.Message("Harmony patching");
+				foreach (var type in Assembly.GetExecutingAssembly().GetTypes()) {
+					PatchClassProcessor processor = new(harmony, type);
+					if (processor.Patch() is not List<MethodInfo> patchedMethods) continue;
+					if (patchedMethods.Count == 0) {
+						Log.Message($"`{type.Name}` skipped");
+						continue;
+					}
+					Log.Message($"`{type.Name}` patched methods {string.Join(", ", patchedMethods.Select(m => $"`{m.Name}`"))}");
+				}
 
 				// Register as an explicit MM callback such that it is run before all reflected
 				// callbacks (as used by most mods), which may wish to access the MaterialDef library.
@@ -151,7 +158,7 @@ namespace Shabby
 
 			List<MethodBase> callSites = new List<MethodBase>();
 
-			Log.Debug("Beginning search for callsites");
+			Log.Debug("Beginning search for `Shader.Find` callsites");
 
 			// Don't use appdomain, we don't want to accidentally patch Unity itself and this avoid
 			// having to iterate on the BCL and Unity assemblies.
@@ -238,9 +245,9 @@ namespace Shabby
 
 				try {
 					harmony.Patch(callSite, null, null, new HarmonyMethod(callSiteTranspiler));
-					Log.Debug($"Patching call site : {callSite.DeclaringType.Assembly.GetName().Name}::{callSite.DeclaringType}.{callSite.Name}");
+					Log.Debug($"Patching call site: {callSite.DeclaringType.Assembly.GetName().Name}::{callSite.DeclaringType}.{callSite.Name}");
 				} catch (Exception e) {
-					Log.Warning($"Failed to patch call site : {callSite.DeclaringType.Assembly.GetName().Name}::{callSite.DeclaringType}.{callSite.Name}\n{e.Message}\n{e.StackTrace}");
+					Log.Warning($"Failed to patch call site: {callSite.DeclaringType.Assembly.GetName().Name}::{callSite.DeclaringType}.{callSite.Name}\n{e.Message}\n{e.StackTrace}");
 				}
 			}
 		}

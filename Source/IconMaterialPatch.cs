@@ -81,7 +81,6 @@ namespace Shabby
 					code[i].opcode = OpCodes.Ldloc_S;
 					code[i].operand = locMaterial;
 					code[i + 1].operand = mInfo_FindOverrideIconShader;
-					Log.Debug("patched part icon shader replacement");
 					return code;
 				}
 			}

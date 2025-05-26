@@ -17,7 +17,7 @@
 
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
-    <LangVersion>7.3</LangVersion>
+    <LangVersion>latest</LangVersion>
     <IsPackable>false</IsPackable>
     <PlatformTarget>x64</PlatformTarget>
     <NoWarn>1701;1702;CS0649;CS1591;</NoWarn>
