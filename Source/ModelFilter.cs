@@ -21,34 +21,35 @@ using System.Linq;
 using KSPBuildTools;
 using UnityEngine;
 
-namespace Shabby
+namespace Shabby;
+
+public class ModelFilter
 {
-	public class ModelFilter
+	public readonly HashSet<string> targetMaterials;
+	public readonly HashSet<string> targetTransforms;
+	public readonly bool blanketApply;
+
+	public readonly HashSet<string> ignoredMeshes;
+
+	public ModelFilter(ConfigNode node)
 	{
-		public readonly HashSet<string> targetMaterials;
-		public readonly HashSet<string> targetTransforms;
-		public readonly bool blanketApply;
+		targetMaterials = node.GetValuesList("targetMaterial").ToHashSet();
+		targetTransforms = node.GetValuesList("targetTransform").ToHashSet();
 
-		public readonly HashSet<string> ignoredMeshes;
-
-		public ModelFilter(ConfigNode node)
-		{
-			targetMaterials = node.GetValuesList("targetMaterial").ToHashSet();
-			targetTransforms = node.GetValuesList("targetTransform").ToHashSet();
-
-			if (targetMaterials.Count > 0 && targetTransforms.Count > 0) {
-				Log.Error("model filter may not specify both materials and transforms");
-				targetTransforms.Clear();
-			}
-
-			blanketApply = targetMaterials.Count == 0 && targetTransforms.Count == 0;
-
-			ignoredMeshes = node.GetValuesList("ignoreMesh").ToHashSet();
+		if (targetMaterials.Count > 0 && targetTransforms.Count > 0) {
+			Log.Error("model filter may not specify both materials and transforms");
+			targetTransforms.Clear();
 		}
 
-		public bool MatchMaterial(Renderer renderer) => targetMaterials.Contains(renderer.sharedMaterial.name);
-		public bool MatchTransform(Transform transform) => targetTransforms.Contains(transform.name);
+		blanketApply = targetMaterials.Count == 0 && targetTransforms.Count == 0;
 
-		public bool MatchIgnored(Renderer renderer) => ignoredMeshes.Contains(renderer.transform.name);
+		ignoredMeshes = node.GetValuesList("ignoreMesh").ToHashSet();
 	}
+
+	public bool MatchMaterial(Renderer renderer) =>
+		targetMaterials.Contains(renderer.sharedMaterial.name);
+
+	public bool MatchTransform(Transform transform) => targetTransforms.Contains(transform.name);
+
+	public bool MatchIgnored(Renderer renderer) => ignoredMeshes.Contains(renderer.transform.name);
 }
