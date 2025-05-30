@@ -65,13 +65,9 @@ public class MaterialDef : ILogContextProvider
 
 	public readonly bool isValid = true;
 
-	internal readonly string logPrefix;
-
 	public MaterialDef(ConfigNode node)
 	{
 		ConfigNode.LoadObjectFromConfig(this, node);
-
-		logPrefix = $"[Shabby][MaterialDef {name}] ";
 
 		if (shaderName != null) {
 			shader = Shabby.FindShader(shaderName);
@@ -90,7 +86,7 @@ public class MaterialDef : ILogContextProvider
 		floats = LoadDictionary<float>(node, "FLOAT");
 		colors = LoadDictionary<Color>(
 			node, "COLOR",
-			value => ParseColor(value, out var color) ? (object)color : null);
+			value => ParseColor(value, out var color) ? color : null);
 		vectors = LoadDictionary<Vector4>(node, "VECTOR");
 		textures = LoadDictionary<Texture>(
 			node, "TEXTURE",
@@ -114,8 +110,7 @@ public class MaterialDef : ILogContextProvider
 			if (value is T parsed) {
 				items[item.name] = parsed;
 			} else {
-				this.LogError(
-					$"failed to load {propKind} property {item.name} = {item.value}");
+				this.LogError($"failed to load {propKind} property {item.name} = {item.value}");
 			}
 		}
 
@@ -130,10 +125,10 @@ public class MaterialDef : ILogContextProvider
 		return false;
 	}
 
-	private static bool CheckProperty(Material mat, string propName)
+	private bool CheckProperty(Material mat, string propName)
 	{
 		var exists = mat.HasProperty(propName);
-		if (!exists) Log.Warning($"shader {mat.shader.name} does not have property {propName}");
+		if (!exists) this.LogWarning($"shader {mat.shader.name} does not have property {propName}");
 		return exists;
 	}
 
@@ -182,8 +177,5 @@ public class MaterialDef : ILogContextProvider
 		return material;
 	}
 
-	public string context()
-	{
-		return name;
-	}
+	public string context() => $"MaterialDef {name}";
 }

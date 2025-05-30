@@ -23,19 +23,19 @@ using UnityEngine;
 
 namespace Shabby;
 
-[DatabaseLoaderAttrib(new string[] { "shab" })]
+[DatabaseLoaderAttrib(["shab"])]
 public class DatabaseLoaderTexture_SHAB : DatabaseLoader<GameDatabase.TextureInfo>
 {
 	public override IEnumerator Load(UrlDir.UrlFile urlFile, FileInfo file)
 	{
-		Log.Message($"loading '{urlFile.fullPath}'");
+		Log.Message($"loading `{urlFile.fullPath}`");
 		var bundle = AssetBundle.LoadFromFile(urlFile.fullPath);
 		if (!bundle) {
-			Log.Warning($"could not load {urlFile.fullPath}");
+			Log.Warning($"could not load `{urlFile.fullPath}`");
 		} else {
 			var shaders = bundle.LoadAllAssets<Shader>();
 			foreach (var shader in shaders) {
-				Log.Debug($"adding {shader.name}");
+				Log.Debug($"adding custom shader `{shader.name}`");
 				Shabby.AddShader(shader);
 			}
 		}

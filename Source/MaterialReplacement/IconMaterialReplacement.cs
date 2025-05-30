@@ -27,16 +27,21 @@ using UnityEngine;
 namespace Shabby;
 
 [HarmonyPatch(typeof(PartLoader), "SetPartIconMaterials")]
-internal class SetPartIconMaterialsPatch
+internal class PartLoader_SetPartIconMaterials_Patch
 {
-	private static MethodInfo mInfo_ShaderFind =
+	private static readonly MethodInfo mInfo_ShaderFind =
 		AccessTools.Method(typeof(Shader), nameof(Shader.Find));
 
-	private static MethodInfo mInfo_FindOverrideIconShader =
-		AccessTools.Method(typeof(SetPartIconMaterialsPatch), nameof(FindOverrideIconShader));
+	private static readonly MethodInfo mInfo_FindOverrideIconShader = AccessTools.Method(
+		typeof(PartLoader_SetPartIconMaterials_Patch), nameof(FindOverrideIconShader));
 
-	private static Shader FindOverrideIconShader(Material material) =>
-		Shabby.TryFindIconShader(material.shader.name) ?? Shabby.FindShader("KSP/ScreenSpaceMask");
+	private static Shader FindOverrideIconShader(Material material)
+	{
+		var iconShader = Shabby.TryFindIconShader(material.shader.name);
+		if (iconShader != null)
+			return iconShader;
+		return Shabby.FindShader("KSP/ScreenSpaceMask");
+	}
 
 	/// <summary>
 	/// The stock method iterates through every material in the icon prefab and replaces some
@@ -87,7 +92,7 @@ internal class SetPartIconMaterialsPatch
 }
 
 [HarmonyPatch(TargetType, "GetIconShader")]
-internal class KSPCFGetIconShaderPatch
+internal class KSPCF_PartParsingPerf_GetIconShader_Patch
 {
 	private const string TargetType = "KSPCommunityFixes.Performance.PartParsingPerf";
 
