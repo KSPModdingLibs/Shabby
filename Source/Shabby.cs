@@ -80,15 +80,19 @@ public class Shabby : MonoBehaviour
 		harmony = new Harmony("Shabby");
 		Log.Message("Harmony patching");
 		foreach (var type in Assembly.GetExecutingAssembly().GetTypes()) {
-			PatchClassProcessor processor = new(harmony, type);
-			if (processor.Patch() is not List<MethodInfo> patchedMethods) continue;
-			if (patchedMethods.Count == 0) {
-				Log.Message($"`{type.Name}` skipped");
-				continue;
-			}
+			try {
+				PatchClassProcessor processor = new(harmony, type);
+				if (processor.Patch() is not List<MethodInfo> patchedMethods) continue;
+				if (patchedMethods.Count == 0) {
+					Log.Message($"`{type.Name}` skipped");
+					continue;
+				}
 
-			Log.Message(
-				$"`{type.Name}` patched methods {string.Join(", ", patchedMethods.Select(m => $"`{m.Name}`"))}");
+				Log.Message(
+					$"`{type.Name}` patched methods {string.Join(", ", patchedMethods.Select(m => $"`{m.Name}`"))}");
+			} catch (Exception e) {
+				Log.Error($"encountered exception while applying `{type.Name}`:\n{e}");
+			}
 		}
 
 		// Register as an explicit MM callback such that it is run before all reflected
