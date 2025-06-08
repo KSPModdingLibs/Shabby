@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -48,13 +49,40 @@ internal static class PropIdToName
 		IdToName.TryGetValue(id, out var name) ? name : $"<{id}>";
 }
 
-internal abstract class Prop;
+internal abstract class Prop
+{
+	internal abstract void Write(int id, MaterialPropertyBlock mpb);
+}
 
-internal class Prop<T>(T value) : Prop
+internal abstract class Prop<T>(T value) : Prop
 {
 	internal T Value = value;
-
 	public override string ToString() => Value.ToString();
+}
+
+internal class PropColor(Color value) : Prop<Color>(value)
+{
+	internal override void Write(int id, MaterialPropertyBlock mpb) => mpb.SetColor(id, Value);
+}
+
+internal class PropFloat(float value) : Prop<float>(value)
+{
+	internal override void Write(int id, MaterialPropertyBlock mpb) => mpb.SetFloat(id, Value);
+}
+
+internal class PropInt(int value) : Prop<int>(value)
+{
+	internal override void Write(int id, MaterialPropertyBlock mpb) => mpb.SetInt(id, Value);
+}
+
+internal class PropTexture(Texture value) : Prop<Texture>(value)
+{
+	internal override void Write(int id, MaterialPropertyBlock mpb) => mpb.SetTexture(id, Value);
+}
+
+internal class PropVector(Vector4 value) : Prop<Vector4>(value)
+{
+	internal override void Write(int id, MaterialPropertyBlock mpb) => mpb.SetVector(id, Value);
 }
 
 public sealed class Props(int priority)
@@ -79,39 +107,36 @@ public sealed class Props(int priority)
 	internal IEnumerable<int> ManagedIds => _props.Keys;
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private void _internalSet<T>(int id, T value)
+	private void _internalSet<T, TProp>(int id, T value) where TProp : Prop<T>
 	{
-		if (!_props.TryGetValue(id, out var prop)) {
-			_props[id] = new Prop<T>(value);
-			Changed = true;
-			return;
-		}
+		if (_props.TryGetValue(id, out var prop)) {
+			if (prop is TProp typedProp) {
+				if (EqualityComparer<T>.Default.Equals(value, typedProp.Value)) return;
 
-		if (prop is not Prop<T> propT) {
+				typedProp.Value = value;
+				Changed = true;
+				return;
+			}
+
 			MaterialPropertyManager.Instance.LogWarning(
 				$"property {PropIdToName.Get(id)} has mismatched type; overwriting with {typeof(T).Name}!");
-			_props[id] = new Prop<T>(value);
-			Changed = true;
-			return;
 		}
 
-		if (EqualityComparer<T>.Default.Equals(value, propT.Value)) return;
-
-		propT.Value = value;
+		_props[id] = (TProp)Activator.CreateInstance(typeof(TProp), value);
 		Changed = true;
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public void SetColor(int id, Color value) => _internalSet<Color>(id, value);
+	public void SetColor(int id, Color value) => _internalSet<Color, PropColor>(id, value);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public void SetFloat(int id, float value) => _internalSet<float>(id, value);
+	public void SetFloat(int id, float value) => _internalSet<float, PropFloat>(id, value);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public void SetInt(int id, int value) => _internalSet<int>(id, value);
+	public void SetInt(int id, int value) => _internalSet<int, PropInt>(id, value);
 
-	public void SetTexture(int id, Texture value) => _internalSet<Texture>(id, value);
-	public void SetVector(int id, Vector4 value) => _internalSet<Vector4>(id, value);
+	public void SetTexture(int id, Texture value) => _internalSet<Texture, PropTexture>(id, value);
+	public void SetVector(int id, Vector4 value) => _internalSet<Vector4, PropVector>(id, value);
 
 	private bool _internalHas<T>(int id) => _props.TryGetValue(id, out var prop) && prop is Prop<T>;
 
@@ -121,6 +146,7 @@ public sealed class Props(int priority)
 	public bool HasTexture(int id) => _internalHas<Texture>(id);
 	public bool HasVector(int id) => _internalHas<Vector4>(id);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal void Write(int id, MaterialPropertyBlock mpb)
 	{
 		if (!_props.TryGetValue(id, out var prop)) {
@@ -130,13 +156,7 @@ public sealed class Props(int priority)
 		MaterialPropertyManager.Instance.LogDebug(
 			$"writing property {PropIdToName.Get(id)} = {prop}");
 
-		switch (prop) {
-			case Prop<Color> c: mpb.SetColor(id, c.Value); break;
-			case Prop<float> f: mpb.SetFloat(id, f.Value); break;
-			case Prop<int> i: mpb.SetInt(id, i.Value); break;
-			case Prop<Texture> t: mpb.SetTexture(id, t.Value); break;
-			case Prop<Vector4> v: mpb.SetVector(id, v.Value); break;
-		}
+		prop.Write(id, mpb);
 	}
 
 	public override string ToString()
