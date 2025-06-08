@@ -21,7 +21,7 @@ using System.Linq;
 using KSPBuildTools;
 using UnityEngine;
 
-namespace Shabby;
+namespace Shabby.MaterialReplacement;
 
 public class ModelFilter
 {

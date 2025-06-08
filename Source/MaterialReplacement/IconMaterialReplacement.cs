@@ -24,7 +24,7 @@ using HarmonyLib;
 using KSPBuildTools;
 using UnityEngine;
 
-namespace Shabby;
+namespace Shabby.MaterialReplacement;
 
 [HarmonyPatch(typeof(PartLoader), "SetPartIconMaterials")]
 internal class PartLoader_SetPartIconMaterials_Patch

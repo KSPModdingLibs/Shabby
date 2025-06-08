@@ -126,7 +126,7 @@ public class Shabby : MonoBehaviour
 			LoadConfigs(iconReplacements, shabbyNode, "ICON_SHADER", "shader", "iconShader");
 		}
 
-		MaterialDefLibrary.Load();
+		MaterialReplacement.MaterialDefLibrary.Load();
 	}
 
 	private void Start()

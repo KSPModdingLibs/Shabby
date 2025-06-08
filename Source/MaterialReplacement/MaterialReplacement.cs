@@ -22,7 +22,7 @@ using HarmonyLib;
 using KSPBuildTools;
 using UnityEngine;
 
-namespace Shabby;
+namespace Shabby.MaterialReplacement;
 
 public class MaterialReplacement : ModelFilter
 {
