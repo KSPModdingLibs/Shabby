@@ -32,6 +32,13 @@ internal class CompiledProps
 		return added;
 	}
 
+	internal bool Remove(Props props)
+	{
+		var removed = cascade.Remove(props);
+		if (removed) cacheEntry = null;
+		return removed;
+	}
+
 	private MpbCacheEntry? cacheEntry = null;
 
 	// Should this be a hashset?

@@ -18,6 +18,10 @@ public sealed class MaterialPropertyManager : ScenarioModule
 
 	#region Lifecycle
 
+	private MaterialPropertyManager()
+	{
+	}
+
 	public override void OnAwake()
 	{
 		name = nameof(MaterialPropertyManager);
@@ -34,13 +38,19 @@ public sealed class MaterialPropertyManager : ScenarioModule
 
 	#endregion
 
-	public void Set(Renderer renderer, Props props)
+	public bool Set(Renderer renderer, Props props)
 	{
 		if (!compiledProperties.TryGetValue(renderer, out var compiledProps)) {
 			compiledProperties[renderer] = compiledProps = new CompiledProps();
 		}
 
-		compiledProps.Add(props);
+		return compiledProps.Add(props);
+	}
+
+	public bool Remove(Renderer renderer, Props props)
+	{
+		if (!compiledProperties.TryGetValue(renderer, out var compiledProps)) return false;
+		return compiledProps.Remove(props);
 	}
 
 	private static readonly List<Renderer> _deadRenderers = [];
