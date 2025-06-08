@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Shabby;
+namespace Shabby.DynamicProperties;
 
 [KSPScenario(
 	createOptions: ScenarioCreationOptions.AddToAllGames,

@@ -3,7 +3,7 @@ using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
 
-namespace Shabby;
+namespace Shabby.DynamicProperties;
 
 [HarmonyPatch(typeof(Part))]
 internal static class PartPatch

@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 using KSPBuildTools;
 using UnityEngine;
 
-namespace Shabby;
+namespace Shabby.DynamicProperties;
 
 internal static class PropIdToName
 {
