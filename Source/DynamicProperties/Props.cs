@@ -1,9 +1,52 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using KSPBuildTools;
 using UnityEngine;
 
 namespace Shabby;
+
+internal static class PropIdToName
+{
+	private static readonly string[] CommonProperties = [
+		"TransparentFX",
+		"_BumpMap",
+		"_Color",
+		"_EmissiveColor",
+		"_MainTex",
+		"_MaxX",
+		"_MaxY",
+		"_MinX",
+		"_MinY",
+		"_Multiplier",
+		"_Opacity",
+		"_RimColor",
+		"_RimFalloff",
+		"_TC1Color",
+		"_TC1MetalBlend",
+		"_TC1Metalness",
+		"_TC1SmoothBlend",
+		"_TC1Smoothness",
+		"_TC2Color",
+		"_TC2MetalBlend",
+		"_TC2Metalness",
+		"_TC2SmoothBlend",
+		"_TC2Smoothness",
+		"_TemperatureColor",
+		"_Tex",
+		"_Tint",
+		"_TintColor",
+		"_subdiv",
+		"localMatrix",
+		"upMatrix"
+	];
+
+	private static readonly Dictionary<int, string> IdToName =
+		CommonProperties.ToDictionary(Shader.PropertyToID, name => name);
+
+	internal static string Get(int id) =>
+		IdToName.TryGetValue(id, out var name) ? name : $"<{id}>";
+}
 
 internal abstract class Prop;
 
@@ -38,10 +81,6 @@ public sealed class Props(int priority)
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void _internalSet<T>(int id, T value)
 	{
-		Dirty = true;
-
-		MaterialPropertyManager.Instance.LogDebug($"setting {id} to {value}");
-
 		if (!_props.TryGetValue(id, out var prop)) {
 			_props[id] = new Prop<T>(value);
 			Changed = true;
@@ -50,7 +89,7 @@ public sealed class Props(int priority)
 
 		if (prop is not Prop<T> propT) {
 			MaterialPropertyManager.Instance.LogWarning(
-				$"property {id} has mismatched type; overwriting with {typeof(T).Name}!");
+				$"property {PropIdToName.Get(id)} has mismatched type; overwriting with {typeof(T).Name}!");
 			_props[id] = new Prop<T>(value);
 			Changed = true;
 			return;
@@ -85,8 +124,11 @@ public sealed class Props(int priority)
 	internal void Write(int id, MaterialPropertyBlock mpb)
 	{
 		if (!_props.TryGetValue(id, out var prop)) {
-			throw new KeyNotFoundException($"property {id} not found");
+			throw new KeyNotFoundException($"property {PropIdToName.Get(id)} not found");
 		}
+
+		MaterialPropertyManager.Instance.LogDebug(
+			$"writing property {PropIdToName.Get(id)} = {prop}");
 
 		switch (prop) {
 			case Prop<Color> c: mpb.SetColor(id, c.Value); break;
@@ -102,7 +144,7 @@ public sealed class Props(int priority)
 		var sb = StringBuilderCache.Acquire();
 		sb.AppendFormat("(Priority {0}) {{\n", Priority);
 		foreach (var (id, prop) in _props) {
-			sb.AppendFormat("{0} = {1}\n", id, prop);
+			sb.AppendFormat("{0} = {1}\n", PropIdToName.Get(id), prop);
 		}
 
 		sb.AppendLine("}");
