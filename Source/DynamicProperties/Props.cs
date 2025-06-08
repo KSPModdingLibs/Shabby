@@ -89,27 +89,27 @@ public sealed class Props(int priority)
 {
 	public readonly int Priority = priority;
 
-	private readonly Dictionary<int, Prop> _props = [];
+	private readonly Dictionary<int, Prop> props = [];
 
 	internal bool Changed = false;
 
 	private static uint _idCounter = 0;
 	private static uint _nextId() => _idCounter++;
-	private readonly uint _uniqueId = _nextId();
+	private readonly uint uniqueId = _nextId();
 
 	// Note that this is compatible with default object reference equality.
 	public static readonly Comparer<Props> PriorityComparer = Comparer<Props>.Create((a, b) =>
 	{
 		var priorityCmp = a.Priority.CompareTo(b.Priority);
-		return priorityCmp != 0 ? priorityCmp : a._uniqueId.CompareTo(b._uniqueId);
+		return priorityCmp != 0 ? priorityCmp : a.uniqueId.CompareTo(b.uniqueId);
 	});
 
-	internal IEnumerable<int> ManagedIds => _props.Keys;
+	internal IEnumerable<int> ManagedIds => props.Keys;
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void _internalSet<T, TProp>(int id, T value) where TProp : Prop<T>
 	{
-		if (_props.TryGetValue(id, out var prop)) {
+		if (props.TryGetValue(id, out var prop)) {
 			if (prop is TProp typedProp) {
 				if (EqualityComparer<T>.Default.Equals(value, typedProp.Value)) return;
 
@@ -122,7 +122,7 @@ public sealed class Props(int priority)
 				$"property {PropIdToName.Get(id)} has mismatched type; overwriting with {typeof(T).Name}!");
 		}
 
-		_props[id] = (TProp)Activator.CreateInstance(typeof(TProp), value);
+		props[id] = (TProp)Activator.CreateInstance(typeof(TProp), value);
 		Changed = true;
 	}
 
@@ -138,7 +138,7 @@ public sealed class Props(int priority)
 	public void SetTexture(int id, Texture value) => _internalSet<Texture, PropTexture>(id, value);
 	public void SetVector(int id, Vector4 value) => _internalSet<Vector4, PropVector>(id, value);
 
-	private bool _internalHas<T>(int id) => _props.TryGetValue(id, out var prop) && prop is Prop<T>;
+	private bool _internalHas<T>(int id) => props.TryGetValue(id, out var prop) && prop is Prop<T>;
 
 	public bool HasColor(int id) => _internalHas<Color>(id);
 	public bool HasFloat(int id) => _internalHas<float>(id);
@@ -149,7 +149,7 @@ public sealed class Props(int priority)
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal void Write(int id, MaterialPropertyBlock mpb)
 	{
-		if (!_props.TryGetValue(id, out var prop)) {
+		if (!props.TryGetValue(id, out var prop)) {
 			throw new KeyNotFoundException($"property {PropIdToName.Get(id)} not found");
 		}
 
@@ -163,7 +163,7 @@ public sealed class Props(int priority)
 	{
 		var sb = StringBuilderCache.Acquire();
 		sb.AppendFormat("(Priority {0}) {{\n", Priority);
-		foreach (var (id, prop) in _props) {
+		foreach (var (id, prop) in props) {
 			sb.AppendFormat("{0} = {1}\n", PropIdToName.Get(id), prop);
 		}
 
