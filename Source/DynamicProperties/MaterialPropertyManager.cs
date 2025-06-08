@@ -47,7 +47,7 @@ public sealed class MaterialPropertyManager : ScenarioModule
 
 	private void Refresh()
 	{
-		CompiledProps.UpdateDirtyProps();
+		CompiledProps.RefreshChangedProps();
 
 		foreach (var (renderer, compiledProps) in compiledProperties) {
 			if (renderer == null) {
@@ -55,7 +55,9 @@ public sealed class MaterialPropertyManager : ScenarioModule
 				continue;
 			}
 
-			renderer.SetPropertyBlock(compiledProps.Get());
+			if (compiledProps.GetIfChanged(out var mpb)) {
+				renderer.SetPropertyBlock(mpb);
+			}
 		}
 
 		foreach (var dead in _deadRenderers) {

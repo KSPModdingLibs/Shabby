@@ -9,6 +9,7 @@ internal class MpbCacheEntry
 {
 	internal readonly MaterialPropertyBlock Mpb = new();
 	internal readonly Dictionary<Props, List<int>> ManagedIds = [];
+	internal bool Changed = true;
 }
 
 internal class CompiledProps
@@ -17,65 +18,82 @@ internal class CompiledProps
 		SortedSet<Props>.CreateSetComparer();
 
 	// FIXME: clear old entries...
-	private static readonly Dictionary<SortedSet<Props>, MpbCacheEntry> mpbCache =
+	private static readonly Dictionary<SortedSet<Props>, MpbCacheEntry> MpbCache =
 		new(CascadeKeyComparer);
 
-	internal static void Clear() => mpbCache.Clear();
+	internal static void Clear() => MpbCache.Clear();
 
 	private readonly SortedSet<Props> cascade = new(Props.PriorityComparer);
 
 	internal bool Add(Props props)
 	{
-		cachedMpb = null;
-		return cascade.Add(props);
+		var added = cascade.Add(props);
+		if (added) cacheEntry = null;
+		return added;
 	}
 
-	private MaterialPropertyBlock? cachedMpb = null;
+	private MpbCacheEntry? cacheEntry = null;
 
 	// Should this be a hashset?
-	private static readonly List<Props> _dirtyProps = [];
+	private static readonly List<Props> _changedProps = [];
 
-	internal static void UpdateDirtyProps()
+	internal static void RefreshChangedProps()
 	{
-		foreach (var (cascade, cache) in mpbCache) {
+		foreach (var (cascade, cache) in MpbCache) {
+			cache.Changed = false;
 			foreach (var props in cascade) {
-				if (!props.Dirty) continue;
-				_dirtyProps.Add(props);
+				if (!props.Changed) continue;
+				cache.Changed = true;
+				_changedProps.Add(props);
 				foreach (var managedId in cache.ManagedIds[props]) {
 					props.Write(managedId, cache.Mpb);
 				}
 			}
 		}
 
-		foreach (var props in _dirtyProps) props.Dirty = false;
-		_dirtyProps.Clear();
+		foreach (var props in _changedProps) props.Changed = false;
+		_changedProps.Clear();
 	}
 
-	internal MaterialPropertyBlock Get()
+	private static MpbCacheEntry BuildCacheEntry(SortedSet<Props> cascade)
 	{
-		if (cachedMpb != null) return cachedMpb;
+		var clonedCascade = new SortedSet<Props>(cascade, Props.PriorityComparer);
+		var entry = MpbCache[clonedCascade] = new MpbCacheEntry();
 
-		if (!mpbCache.TryGetValue(cascade, out var cacheEntry)) {
-			mpbCache[cascade] = cacheEntry = new MpbCacheEntry();
-
-			Dictionary<int, Props> idManagers = [];
-			foreach (var props in cascade) {
-				foreach (var id in props.ManagedIds) {
-					idManagers[id] = props;
-				}
-			}
-
-			foreach (var (id, props) in idManagers) {
-				if (!cacheEntry.ManagedIds.TryGetValue(props, out var ids)) {
-					cacheEntry.ManagedIds[props] = ids = [];
-				}
-
-				ids.Add(id);
-				props.Write(id, cacheEntry.Mpb);
+		Dictionary<int, Props> idManagers = [];
+		foreach (var props in cascade) {
+			foreach (var id in props.ManagedIds) {
+				idManagers[id] = props;
 			}
 		}
 
-		cachedMpb = cacheEntry.Mpb;
-		return cachedMpb;
+		foreach (var (id, props) in idManagers) {
+			if (!entry.ManagedIds.TryGetValue(props, out var ids)) {
+				entry.ManagedIds[props] = ids = [];
+			}
+
+			ids.Add(id);
+			props.Write(id, entry.Mpb);
+		}
+
+		return entry;
+	}
+
+	internal bool GetIfChanged(out MaterialPropertyBlock? mpb)
+	{
+		if (cacheEntry != null) {
+			mpb = cacheEntry.Changed ? cacheEntry.Mpb : null;
+			return cacheEntry.Changed;
+		}
+
+		if (!MpbCache.TryGetValue(cascade, out cacheEntry)) {
+			Debug.Log("cache not hit");
+			cacheEntry = BuildCacheEntry(cascade);
+		} else {
+			Debug.Log("cache hit!");
+		}
+
+		mpb = cacheEntry.Mpb;
+		return true;
 	}
 }

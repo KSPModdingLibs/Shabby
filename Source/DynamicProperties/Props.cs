@@ -20,7 +20,7 @@ public sealed class Props(int priority)
 
 	private readonly Dictionary<int, Prop> _props = [];
 
-	internal bool Dirty = false;
+	internal bool Changed = false;
 
 	private static uint _idCounter = 0;
 	private static uint _nextId() => _idCounter++;
@@ -44,6 +44,7 @@ public sealed class Props(int priority)
 
 		if (!_props.TryGetValue(id, out var prop)) {
 			_props[id] = new Prop<T>(value);
+			Changed = true;
 			return;
 		}
 
@@ -51,10 +52,14 @@ public sealed class Props(int priority)
 			MaterialPropertyManager.Instance.LogWarning(
 				$"property {id} has mismatched type; overwriting with {typeof(T).Name}!");
 			_props[id] = new Prop<T>(value);
+			Changed = true;
 			return;
 		}
 
+		if (EqualityComparer<T>.Default.Equals(value, propT.Value)) return;
+
 		propT.Value = value;
+		Changed = true;
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
