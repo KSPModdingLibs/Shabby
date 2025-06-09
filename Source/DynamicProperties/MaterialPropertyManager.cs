@@ -1,12 +1,11 @@
 using System.Collections.Generic;
+using KSPBuildTools;
 using UnityEngine;
 
 namespace Shabby.DynamicProperties;
 
-[KSPScenario(
-	createOptions: ScenarioCreationOptions.AddToAllGames,
-	tgtScenes: [GameScenes.LOADING, GameScenes.EDITOR, GameScenes.FLIGHT])]
-public sealed class MaterialPropertyManager : ScenarioModule
+[KSPAddon(KSPAddon.Startup.EveryScene, false)]
+public sealed class MaterialPropertyManager : MonoBehaviour
 {
 	#region Fields
 
@@ -22,18 +21,26 @@ public sealed class MaterialPropertyManager : ScenarioModule
 	{
 	}
 
-	public override void OnAwake()
+	private void Awake()
 	{
+		if (Instance != null) {
+			DestroyImmediate(this);
+			return;
+		}
+
 		name = nameof(MaterialPropertyManager);
 		Instance = this;
 	}
 
 	private void LateUpdate() => Refresh();
 
-	public void OnDestroy()
+	private void OnDestroy()
 	{
+		if (Instance != this) return;
+
 		Instance = null;
-		CompiledProps.Clear();
+		CompiledProps.ClearCache();
+		this.LogDebug("destroyed");
 	}
 
 	#endregion
@@ -61,17 +68,20 @@ public sealed class MaterialPropertyManager : ScenarioModule
 
 		foreach (var (renderer, compiledProps) in compiledProperties) {
 			if (renderer == null) {
+				this.LogDebug($"dead renderer {renderer.GetHashCode()}");
 				_deadRenderers.Add(renderer);
 				continue;
 			}
 
+			if (!renderer.gameObject.activeInHierarchy) continue;
+
 			if (compiledProps.GetIfChanged(out var mpb)) {
+				this.LogDebug($"set mpb on renderer {renderer.name} {renderer.GetHashCode()}\n");
 				renderer.SetPropertyBlock(mpb);
 			}
 		}
 
-		foreach (var dead in _deadRenderers) {
-			compiledProperties.Remove(dead);
-		}
+		foreach (var dead in _deadRenderers) compiledProperties.Remove(dead);
+		_deadRenderers.Clear();
 	}
 }

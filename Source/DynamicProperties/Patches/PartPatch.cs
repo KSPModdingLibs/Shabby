@@ -8,20 +8,20 @@ namespace Shabby.DynamicProperties;
 [HarmonyPatch(typeof(Part))]
 internal static class PartPatch
 {
-	private static readonly Dictionary<Part, Props> highlightProperties = [];
+	private static readonly Dictionary<Part, Props> rimHighlightProps = [];
 
 	[HarmonyPostfix]
 	[HarmonyPatch("Awake")]
 	private static void Awake_Postfix(Part __instance)
 	{
-		highlightProperties[__instance] = new Props(int.MinValue + 1);
+		rimHighlightProps[__instance] = new Props(int.MinValue + 1);
 	}
 
 	[HarmonyPostfix]
 	[HarmonyPatch("CreateRendererLists")]
 	private static void CreateRendererLists_Postfix(Part __instance)
 	{
-		var props = highlightProperties[__instance];
+		var props = rimHighlightProps[__instance];
 		props.SetFloat(PropertyIDs._RimFalloff, 2f);
 		props.SetColor(PropertyIDs._RimColor, Part.defaultHighlightNone);
 		foreach (var renderer in __instance.HighlightRenderer) {
@@ -35,13 +35,13 @@ internal static class PartPatch
 	{
 		__instance.CreateRendererLists();
 		__instance.mpb.SetFloat(PropertyIDs._Opacity, opacity);
-		highlightProperties[__instance].SetFloat(PropertyIDs._Opacity, opacity);
+		rimHighlightProps[__instance].SetFloat(PropertyIDs._Opacity, opacity);
 		return false;
 	}
 
 	private static void Highlight_SetRimColor(Part part, Color color)
 	{
-		highlightProperties[part].SetColor(PropertyIDs._RimColor, color);
+		rimHighlightProps[part].SetColor(PropertyIDs._RimColor, color);
 	}
 
 	[HarmonyTranspiler]
@@ -52,7 +52,7 @@ internal static class PartPatch
 		var MPB_SetColor = AccessTools.Method(
 			typeof(MaterialPropertyBlock),
 			nameof(MaterialPropertyBlock.SetColor),
-			[typeof(int)]);
+			[typeof(int), typeof(Color)]);
 		var Part_get_mpb = AccessTools.PropertyGetter(typeof(Part), nameof(Part.mpb));
 		var Part_highlightRenderer =
 			AccessTools.Field(typeof(Part), nameof(Part.highlightRenderer));
@@ -122,6 +122,6 @@ internal static class PartPatch
 	[HarmonyPatch("OnDestroy")]
 	private static void OnDestroy_Postfix(Part __instance)
 	{
-		highlightProperties.Remove(__instance);
+		rimHighlightProps.Remove(__instance);
 	}
 }

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using KSPBuildTools;
 using UnityEngine;
 
 namespace Shabby.DynamicProperties;
@@ -21,9 +22,10 @@ internal class CompiledProps
 	private static readonly Dictionary<SortedSet<Props>, MpbCacheEntry> MpbCache =
 		new(CascadeKeyComparer);
 
-	internal static void Clear() => MpbCache.Clear();
+	internal static void ClearCache() => MpbCache.Clear();
 
 	private readonly SortedSet<Props> cascade = new(Props.PriorityComparer);
+	private MpbCacheEntry? cacheEntry = null;
 
 	internal bool Add(Props props)
 	{
@@ -39,21 +41,19 @@ internal class CompiledProps
 		return removed;
 	}
 
-	private MpbCacheEntry? cacheEntry = null;
-
 	// Should this be a hashset?
 	private static readonly List<Props> _changedProps = [];
 
 	internal static void RefreshChangedProps()
 	{
-		foreach (var (cascade, cache) in MpbCache) {
-			cache.Changed = false;
+		foreach (var (cascade, cacheEntry) in MpbCache) {
+			cacheEntry.Changed = false;
 			foreach (var props in cascade) {
 				if (!props.Changed) continue;
-				cache.Changed = true;
+				cacheEntry.Changed = true;
 				_changedProps.Add(props);
-				foreach (var managedId in cache.ManagedIds[props]) {
-					props.Write(managedId, cache.Mpb);
+				foreach (var managedId in cacheEntry.ManagedIds[props]) {
+					props.Write(managedId, cacheEntry.Mpb);
 				}
 			}
 		}
@@ -90,15 +90,23 @@ internal class CompiledProps
 	{
 		if (cacheEntry != null) {
 			mpb = cacheEntry.Changed ? cacheEntry.Mpb : null;
+			// if (cacheEntry.Changed && HighLogic.LoadedSceneIsEditor) {
+			// 	Debug.Log(cascade.Aggregate("props:\n", (current, props) => current + props));
+			// }
+
 			return cacheEntry.Changed;
 		}
 
 		if (!MpbCache.TryGetValue(cascade, out cacheEntry)) {
-			Debug.Log("cache not hit");
+			MaterialPropertyManager.Instance.LogDebug("building new MPB");
 			cacheEntry = BuildCacheEntry(cascade);
 		} else {
-			Debug.Log("cache hit!");
+			MaterialPropertyManager.Instance.LogDebug("MPB cache hit");
 		}
+
+		// if (HighLogic.LoadedSceneIsEditor) {
+		// 	Debug.Log(cascade.Aggregate("props:\n", (current, props) => current + props));
+		// }
 
 		mpb = cacheEntry.Mpb;
 		return true;
