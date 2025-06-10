@@ -107,7 +107,7 @@ public sealed class MaterialPropertyManager : MonoBehaviour
 			if (props.NeedsEntriesUpdate) {
 				props.OnEntriesChanged(props);
 			} else if (props.NeedsValueUpdate) {
-				props.OnValueChanged(props);
+				props.OnValueChanged(props, null);
 			}
 
 			props.SuppressEagerUpdate =

@@ -27,10 +27,12 @@ public sealed class Props(int priority) : IDisposable
 
 	internal IEnumerable<int> ManagedIds => props.Keys;
 
-	internal delegate void PropsUpdateHandler(Props props);
+	internal delegate void ValueChangedHandler(Props props, int? id);
 
-	internal PropsUpdateHandler OnValueChanged = delegate { };
-	internal PropsUpdateHandler OnEntriesChanged = delegate { };
+	internal delegate void EntriesChangedHandler(Props props);
+
+	internal ValueChangedHandler OnValueChanged = delegate { };
+	internal EntriesChangedHandler OnEntriesChanged = delegate { };
 
 	internal bool SuppressEagerUpdate = false;
 	internal bool NeedsValueUpdate = false;
@@ -50,7 +52,7 @@ public sealed class Props(int priority) : IDisposable
 				if (!typedProp.UpdateIfChanged(value)) return;
 
 				if (!SuppressEagerUpdate) {
-					OnValueChanged(this);
+					OnValueChanged(this, id);
 				} else {
 					NeedsValueUpdate = true;
 				}

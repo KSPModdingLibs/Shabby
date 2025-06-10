@@ -84,16 +84,16 @@ internal class MpbCompiler : IDisposable
 		}
 	}
 
-	private void OnPropsValueChanged(Props props)
-	{
-		WriteMpb(props);
-		ApplyAll();
-	}
-
 	private void OnPropsEntriesChanged(Props props)
 	{
 		RebuildManagerMap();
 		RewriteMpb();
+		ApplyAll();
+	}
+
+	private void OnPropsValueChanged(Props props, int? id)
+	{
+		WriteMpb(props, id);
 		ApplyAll();
 	}
 
@@ -102,15 +102,24 @@ internal class MpbCompiler : IDisposable
 	#region Apply
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private void WriteMpb(Props props)
+	private void WriteMpb(Props props, int? id)
 	{
-		foreach (var id in idManagerMap[props]) props.Write(id, mpb);
+		if (id.HasValue) {
+			props.Write(id.GetValueOrDefault(), mpb);
+		} else {
+			foreach (var managedId in idManagerMap[props]) props.Write(managedId, mpb);
+		}
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void RewriteMpb()
 	{
 		mpb.Clear();
-		foreach (var props in idManagerMap.Keys) WriteMpb(props);
+		foreach (var (props, managedIds) in idManagerMap) {
+			foreach (var managedId in managedIds) {
+				props.Write(managedId, mpb);
+			}
+		}
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
