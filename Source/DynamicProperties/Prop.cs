@@ -6,8 +6,7 @@ namespace Shabby.DynamicProperties;
 
 internal static class PropIdToName
 {
-	private static readonly string[] CommonProperties = [
-		"TransparentFX",
+	private static readonly string[] StockProperties = [
 		"_BumpMap",
 		"_Color",
 		"_EmissiveColor",
@@ -20,19 +19,7 @@ internal static class PropIdToName
 		"_Opacity",
 		"_RimColor",
 		"_RimFalloff",
-		"_TC1Color",
-		"_TC1MetalBlend",
-		"_TC1Metalness",
-		"_TC1SmoothBlend",
-		"_TC1Smoothness",
-		"_TC2Color",
-		"_TC2MetalBlend",
-		"_TC2Metalness",
-		"_TC2SmoothBlend",
-		"_TC2Smoothness",
 		"_TemperatureColor",
-		"_Tex",
-		"_Tint",
 		"_TintColor",
 		"_subdiv",
 		"localMatrix",
@@ -40,7 +27,10 @@ internal static class PropIdToName
 	];
 
 	private static readonly Dictionary<int, string> IdToName =
-		CommonProperties.ToDictionary(Shader.PropertyToID, name => name);
+		StockProperties.ToDictionary(Shader.PropertyToID, name => name);
+
+	internal static void Register(string property) =>
+		IdToName[Shader.PropertyToID(property)] = property;
 
 	internal static string Get(int id) =>
 		IdToName.TryGetValue(id, out var name) ? name : $"<{id}>";

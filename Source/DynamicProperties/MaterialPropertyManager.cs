@@ -50,6 +50,8 @@ public sealed class MaterialPropertyManager : MonoBehaviour
 
 	#endregion
 
+	#region Public API
+
 	public bool Set(Renderer renderer, Props props)
 	{
 		if (renderer == null) {
@@ -75,7 +77,15 @@ public sealed class MaterialPropertyManager : MonoBehaviour
 		return rendererCascades.Remove(renderer);
 	}
 
-	public bool Remove(Props props)
+	public static void RegisterPropertyNamesForDebugLogging(params string[] properties)
+	{
+		foreach (var property in properties) PropIdToName.Register(property);
+	}
+
+	#endregion
+
+	/// Public API equivalent is calling `Props.Dispose`.
+	internal bool Remove(Props props)
 	{
 		var removed = false;
 
