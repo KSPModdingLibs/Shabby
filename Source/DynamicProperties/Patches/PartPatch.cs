@@ -25,7 +25,7 @@ internal static class PartPatch
 		props.SetFloat(PropertyIDs._RimFalloff, 2f);
 		props.SetColor(PropertyIDs._RimColor, Part.defaultHighlightNone);
 		foreach (var renderer in __instance.HighlightRenderer) {
-			MaterialPropertyManager.Instance.Set(renderer, props);
+			MaterialPropertyManager.Instance?.Set(renderer, props);
 		}
 	}
 
