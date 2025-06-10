@@ -13,6 +13,8 @@ public sealed class MaterialPropertyManager : MonoBehaviour
 
 	private readonly Dictionary<Renderer, PropsCascade> rendererCascades = [];
 
+	private readonly List<Props> propsLateUpdateQueue = [];
+
 	#endregion
 
 	#region Lifecycle
@@ -82,5 +84,35 @@ public sealed class MaterialPropertyManager : MonoBehaviour
 		PropsCascade.RemoveCacheEntriesWith(props);
 
 		return removed;
+	}
+
+	private bool _propRefreshScheduled = false;
+	private static readonly WaitForEndOfFrame WfEoF = new();
+
+	private IEnumerator<YieldInstruction> Co_propsLateUpdate()
+	{
+		yield return WfEoF;
+
+		foreach (var props in propsLateUpdateQueue) {
+			if (props.NeedsEntriesUpdate) {
+				props.OnEntriesChanged(props);
+			} else if (props.NeedsValueUpdate) {
+				props.OnValueChanged(props);
+			}
+
+			props.SuppressEagerUpdate =
+				props.NeedsEntriesUpdate = props.NeedsValueUpdate = false;
+		}
+
+		propsLateUpdateQueue.Clear();
+		_propRefreshScheduled = false;
+	}
+
+	internal void ScheduleLateUpdate(Props props)
+	{
+		propsLateUpdateQueue.Add(props);
+		if (_propRefreshScheduled) return;
+		StartCoroutine(Co_propsLateUpdate());
+		_propRefreshScheduled = true;
 	}
 }

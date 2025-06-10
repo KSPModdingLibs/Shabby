@@ -111,6 +111,16 @@ public sealed class Props(int priority) : IDisposable
 	internal PropsUpdateHandler OnValueChanged = delegate { };
 	internal PropsUpdateHandler OnEntriesChanged = delegate { };
 
+	internal bool SuppressEagerUpdate = false;
+	internal bool NeedsValueUpdate = false;
+	internal bool NeedsEntriesUpdate = false;
+
+	public void SuppressEagerUpdatesThisFrame()
+	{
+		SuppressEagerUpdate = true;
+		MaterialPropertyManager.Instance.ScheduleLateUpdate(this);
+	}
+
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void _internalSet<T, TProp>(int id, T value) where TProp : Prop<T>
 	{
@@ -119,7 +129,13 @@ public sealed class Props(int priority) : IDisposable
 				if (EqualityComparer<T>.Default.Equals(value, typedProp.Value)) return;
 
 				typedProp.Value = value;
-				OnValueChanged(this);
+
+				if (!SuppressEagerUpdate) {
+					OnValueChanged(this);
+				} else {
+					NeedsValueUpdate = true;
+				}
+
 				return;
 			}
 
@@ -128,7 +144,12 @@ public sealed class Props(int priority) : IDisposable
 		}
 
 		props[id] = (TProp)Activator.CreateInstance(typeof(TProp), value);
-		OnEntriesChanged(this);
+
+		if (!SuppressEagerUpdate) {
+			OnEntriesChanged(this);
+		} else {
+			NeedsEntriesUpdate = true;
+		}
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
