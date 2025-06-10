@@ -57,31 +57,68 @@ internal abstract class Prop
 internal abstract class Prop<T>(T value) : Prop
 {
 	internal T Value = value;
+
+	internal abstract bool UpdateIfChanged(T value);
 	public override string ToString() => Value.ToString();
 }
 
 internal class PropColor(Color value) : Prop<Color>(value)
 {
+	internal override bool UpdateIfChanged(Color value)
+	{
+		if (Utils.ApproxEquals(value, Value)) return false;
+		Value = value;
+		return true;
+	}
+
 	internal override void Write(int id, MaterialPropertyBlock mpb) => mpb.SetColor(id, Value);
 }
 
 internal class PropFloat(float value) : Prop<float>(value)
 {
+	internal override bool UpdateIfChanged(float value)
+	{
+		if (Utils.ApproxEqualsRel(value, Value)) return false;
+		Value = value;
+		return true;
+	}
+
 	internal override void Write(int id, MaterialPropertyBlock mpb) => mpb.SetFloat(id, Value);
 }
 
 internal class PropInt(int value) : Prop<int>(value)
 {
+	internal override bool UpdateIfChanged(int value)
+	{
+		if (value == Value) return false;
+		Value = value;
+		return true;
+	}
+
 	internal override void Write(int id, MaterialPropertyBlock mpb) => mpb.SetInt(id, Value);
 }
 
 internal class PropTexture(Texture value) : Prop<Texture>(value)
 {
+	internal override bool UpdateIfChanged(Texture value)
+	{
+		if (ReferenceEquals(value, Value)) return false;
+		Value = value;
+		return true;
+	}
+
 	internal override void Write(int id, MaterialPropertyBlock mpb) => mpb.SetTexture(id, Value);
 }
 
 internal class PropVector(Vector4 value) : Prop<Vector4>(value)
 {
+	internal override bool UpdateIfChanged(Vector4 value)
+	{
+		if (Utils.ApproxEqualsRel(value, Value)) return false;
+		Value = value;
+		return true;
+	}
+
 	internal override void Write(int id, MaterialPropertyBlock mpb) => mpb.SetVector(id, Value);
 }
 
@@ -118,7 +155,7 @@ public sealed class Props(int priority) : IDisposable
 	public void SuppressEagerUpdatesThisFrame()
 	{
 		SuppressEagerUpdate = true;
-		MaterialPropertyManager.Instance.ScheduleLateUpdate(this);
+		MaterialPropertyManager.Instance?.ScheduleLateUpdate(this);
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -126,9 +163,7 @@ public sealed class Props(int priority) : IDisposable
 	{
 		if (props.TryGetValue(id, out var prop)) {
 			if (prop is TProp typedProp) {
-				if (EqualityComparer<T>.Default.Equals(value, typedProp.Value)) return;
-
-				typedProp.Value = value;
+				if (!typedProp.UpdateIfChanged(value)) return;
 
 				if (!SuppressEagerUpdate) {
 					OnValueChanged(this);
@@ -179,7 +214,7 @@ public sealed class Props(int priority) : IDisposable
 			throw new KeyNotFoundException($"property {PropIdToName.Get(id)} not found");
 		}
 
-		MaterialPropertyManager.Instance.LogDebug(
+		MaterialPropertyManager.Instance?.LogDebug(
 			$"writing property {PropIdToName.Get(id)} = {prop}");
 
 		prop.Write(id, mpb);
