@@ -11,7 +11,7 @@ public sealed class MaterialPropertyManager : MonoBehaviour
 
 	public static MaterialPropertyManager Instance { get; private set; }
 
-	private readonly Dictionary<Renderer, CompiledProps> compiledProperties = [];
+	private readonly Dictionary<Renderer, PropsCascade> rendererCascades = [];
 
 	#endregion
 
@@ -32,14 +32,17 @@ public sealed class MaterialPropertyManager : MonoBehaviour
 		Instance = this;
 	}
 
-	private void LateUpdate() => Refresh();
-
 	private void OnDestroy()
 	{
 		if (Instance != this) return;
 
 		Instance = null;
-		CompiledProps.ClearCache();
+		PropsCascade.ClearCache();
+
+		// Poor man's GC :'(
+		MaterialColorUpdaterPatch.temperatureColorProps.Clear();
+		ModuleColorChangerPatch.mccProps.Clear();
+
 		this.LogDebug("destroyed");
 	}
 
@@ -47,41 +50,37 @@ public sealed class MaterialPropertyManager : MonoBehaviour
 
 	public bool Set(Renderer renderer, Props props)
 	{
-		if (!compiledProperties.TryGetValue(renderer, out var compiledProps)) {
-			compiledProperties[renderer] = compiledProps = new CompiledProps();
+		if (renderer == null) {
+			Log.LogError(this, $"cannot set property on null renderer {renderer.GetHashCode()}");
+			return false;
 		}
 
-		return compiledProps.Add(props);
+		if (!rendererCascades.TryGetValue(renderer, out var cascade)) {
+			rendererCascades[renderer] = cascade = new PropsCascade(renderer);
+		}
+
+		return cascade.Add(props);
 	}
 
 	public bool Remove(Renderer renderer, Props props)
 	{
-		if (!compiledProperties.TryGetValue(renderer, out var compiledProps)) return false;
-		return compiledProps.Remove(props);
+		if (!rendererCascades.TryGetValue(renderer, out var cascade)) return false;
+		return cascade.Remove(props);
 	}
 
-	private static readonly List<Renderer> _deadRenderers = [];
-
-	private void Refresh()
+	public bool Remove(Renderer renderer)
 	{
-		CompiledProps.RefreshChangedProps();
+		return rendererCascades.Remove(renderer);
+	}
 
-		foreach (var (renderer, compiledProps) in compiledProperties) {
-			if (renderer == null) {
-				this.LogDebug($"dead renderer {renderer.GetHashCode()}");
-				_deadRenderers.Add(renderer);
-				continue;
-			}
+	public bool Remove(Props props)
+	{
+		var removed = false;
 
-			if (!renderer.gameObject.activeInHierarchy) continue;
+		foreach (var cascade in rendererCascades.Values) removed |= cascade.Remove(props);
 
-			if (compiledProps.GetIfChanged(out var mpb)) {
-				this.LogDebug($"set mpb on renderer {renderer.name} {renderer.GetHashCode()}\n");
-				renderer.SetPropertyBlock(mpb);
-			}
-		}
+		PropsCascade.RemoveCacheEntriesWith(props);
 
-		foreach (var dead in _deadRenderers) compiledProperties.Remove(dead);
-		_deadRenderers.Clear();
+		return removed;
 	}
 }

@@ -85,26 +85,31 @@ internal class PropVector(Vector4 value) : Prop<Vector4>(value)
 	internal override void Write(int id, MaterialPropertyBlock mpb) => mpb.SetVector(id, Value);
 }
 
-public sealed class Props(int priority)
+public sealed class Props(int priority) : IDisposable
 {
+	/// Ordered by lowest to highest priority. Equal priority is disambiguated by unique IDs.
+	/// Note that this is compatible with default object reference equality.
+	public static readonly Comparer<Props> PriorityComparer = Comparer<Props>.Create((a, b) =>
+	{
+		var priorityCmp = a.Priority.CompareTo(b.Priority);
+		return priorityCmp != 0 ? priorityCmp : a.UniqueId.CompareTo(b.UniqueId);
+	});
+
+	private static uint _idCounter = 0;
+	private static uint _nextId() => _idCounter++;
+
+	public readonly uint UniqueId = _nextId();
+
 	public readonly int Priority = priority;
 
 	private readonly Dictionary<int, Prop> props = [];
 
-	internal bool Changed = false;
-
-	private static uint _idCounter = 0;
-	private static uint _nextId() => _idCounter++;
-	private readonly uint uniqueId = _nextId();
-
-	// Note that this is compatible with default object reference equality.
-	public static readonly Comparer<Props> PriorityComparer = Comparer<Props>.Create((a, b) =>
-	{
-		var priorityCmp = a.Priority.CompareTo(b.Priority);
-		return priorityCmp != 0 ? priorityCmp : a.uniqueId.CompareTo(b.uniqueId);
-	});
-
 	internal IEnumerable<int> ManagedIds => props.Keys;
+
+	internal delegate void PropsUpdateHandler(Props props);
+
+	internal PropsUpdateHandler OnValueChanged = delegate { };
+	internal PropsUpdateHandler OnEntriesChanged = delegate { };
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void _internalSet<T, TProp>(int id, T value) where TProp : Prop<T>
@@ -114,7 +119,7 @@ public sealed class Props(int priority)
 				if (EqualityComparer<T>.Default.Equals(value, typedProp.Value)) return;
 
 				typedProp.Value = value;
-				Changed = true;
+				OnValueChanged(this);
 				return;
 			}
 
@@ -123,7 +128,7 @@ public sealed class Props(int priority)
 		}
 
 		props[id] = (TProp)Activator.CreateInstance(typeof(TProp), value);
-		Changed = true;
+		OnEntriesChanged(this);
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -169,5 +174,26 @@ public sealed class Props(int priority)
 
 		sb.AppendLine("}");
 		return sb.ToStringAndRelease();
+	}
+
+	private bool _disposed = false;
+
+	private void UnregisterSelf(bool disposing)
+	{
+		if (_disposed) return;
+		Debug.Log($"disposing Props instance {UniqueId}");
+		if (disposing) MaterialPropertyManager.Instance?.Remove(this);
+		_disposed = true;
+	}
+
+	public void Dispose()
+	{
+		UnregisterSelf(true);
+		GC.SuppressFinalize(this);
+	}
+
+	~Props()
+	{
+		UnregisterSelf(false);
 	}
 }

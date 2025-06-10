@@ -122,6 +122,8 @@ internal static class PartPatch
 	[HarmonyPatch("OnDestroy")]
 	private static void OnDestroy_Postfix(Part __instance)
 	{
-		rimHighlightProps.Remove(__instance);
+		if (rimHighlightProps.Remove(__instance, out var props)) {
+			props.Dispose();
+		}
 	}
 }
