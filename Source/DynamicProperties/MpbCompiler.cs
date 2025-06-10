@@ -17,18 +17,18 @@ internal class MpbCompiler : IDisposable
 
 	private readonly HashSet<Renderer> linkedRenderers = [];
 	private readonly MaterialPropertyBlock mpb = new();
-	private readonly Dictionary<Props, List<int>> idManagerMap = [];
+	private readonly Dictionary<int, Props> idManagers = [];
 
 	private static readonly MaterialPropertyBlock EmptyMpb = new();
 
 	#endregion
 
-	internal MpbCompiler(SortedSet<Props> cascades)
+	internal MpbCompiler(SortedSet<Props> cascade)
 	{
 		MaterialPropertyManager.Instance?.LogDebug(
-			$"new cache entry {RuntimeHelpers.GetHashCode(this)}");
+			$"new MpbCompiler instance {RuntimeHelpers.GetHashCode(this)}");
 
-		Cascade = cascades;
+		Cascade = cascade;
 		RebuildManagerMap();
 		RewriteMpb();
 		foreach (var props in Cascade) {
@@ -48,16 +48,12 @@ internal class MpbCompiler : IDisposable
 	internal void Unregister(Renderer renderer)
 	{
 		linkedRenderers.Remove(renderer);
-		renderer.SetPropertyBlock(EmptyMpb);
-		CheckLiveness();
-	}
+		if (renderer != null) renderer.SetPropertyBlock(EmptyMpb);
 
-	private void CheckLiveness()
-	{
 		if (linkedRenderers.Count > 0) return;
-		MaterialPropertyManager.Instance.LogDebug(
-			$"dead cache entry {RuntimeHelpers.GetHashCode(this)}");
-		PropsCascade.RemoveCacheEntry(this);
+		Log.Debug(
+			$"last renderer unregistered from MpbCompiler instance {RuntimeHelpers.GetHashCode(this)}");
+		MpbCompilerCache.Remove(this);
 	}
 
 	#endregion
@@ -66,21 +62,11 @@ internal class MpbCompiler : IDisposable
 
 	private void RebuildManagerMap()
 	{
-		idManagerMap.Clear();
-
-		Dictionary<int, Props> idManagers = [];
+		idManagers.Clear();
 		foreach (var props in Cascade) {
 			foreach (var id in props.ManagedIds) {
 				idManagers[id] = props;
 			}
-		}
-
-		foreach (var (id, props) in idManagers) {
-			if (!idManagerMap.TryGetValue(props, out var ids)) {
-				idManagerMap[props] = ids = [];
-			}
-
-			ids.Add(id);
 		}
 	}
 
@@ -105,9 +91,14 @@ internal class MpbCompiler : IDisposable
 	private void WriteMpb(Props props, int? id)
 	{
 		if (id.HasValue) {
-			props.Write(id.GetValueOrDefault(), mpb);
+			var changedId = id.GetValueOrDefault();
+			if (idManagers[changedId] != props) return;
+			props.Write(changedId, mpb);
 		} else {
-			foreach (var managedId in idManagerMap[props]) props.Write(managedId, mpb);
+			foreach (var (managedId, managingProps) in idManagers) {
+				if (props != managingProps) continue;
+				props.Write(managedId, mpb);
+			}
 		}
 	}
 
@@ -115,11 +106,7 @@ internal class MpbCompiler : IDisposable
 	private void RewriteMpb()
 	{
 		mpb.Clear();
-		foreach (var (props, managedIds) in idManagerMap) {
-			foreach (var managedId in managedIds) {
-				props.Write(managedId, mpb);
-			}
-		}
+		foreach (var (id, props) in idManagers) props.Write(id, mpb);
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -143,7 +130,7 @@ internal class MpbCompiler : IDisposable
 			MaterialPropertyManager.Instance.Remove(dead);
 		}
 
-		CheckLiveness();
+		_deadRenderers.Clear();
 	}
 
 	#endregion
@@ -152,15 +139,15 @@ internal class MpbCompiler : IDisposable
 
 	private bool _disposed = false;
 
-	private void UnlinkProps()
+	private void HandleDispose()
 	{
 		if (_disposed) return;
 
-		Debug.Log("disposing MPB cache entry");
+		Log.Debug($"disposing MPB compiler instance {RuntimeHelpers.GetHashCode(this)}");
 
 		foreach (var props in Cascade) {
-			props.OnValueChanged -= OnPropsValueChanged;
 			props.OnEntriesChanged -= OnPropsEntriesChanged;
+			props.OnValueChanged -= OnPropsValueChanged;
 		}
 
 		_disposed = true;
@@ -168,13 +155,13 @@ internal class MpbCompiler : IDisposable
 
 	public void Dispose()
 	{
-		UnlinkProps();
+		HandleDispose();
 		GC.SuppressFinalize(this);
 	}
 
 	~MpbCompiler()
 	{
-		UnlinkProps();
+		HandleDispose();
 	}
 
 	#endregion

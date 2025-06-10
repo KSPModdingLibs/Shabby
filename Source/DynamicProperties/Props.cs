@@ -6,15 +6,16 @@ using UnityEngine;
 
 namespace Shabby.DynamicProperties;
 
-public sealed class Props : IDisposable
+public sealed class Props : IComparable<Props>, IDisposable
 {
 	/// Ordered by lowest to highest priority. Equal priority is disambiguated by unique IDs.
-	/// Note that this is compatible with default object reference equality.
-	public static readonly Comparer<Props> PriorityComparer = Comparer<Props>.Create((a, b) =>
+	public int CompareTo(Props other)
 	{
-		var priorityCmp = a.Priority.CompareTo(b.Priority);
-		return priorityCmp != 0 ? priorityCmp : a.UniqueId.CompareTo(b.UniqueId);
-	});
+		if (ReferenceEquals(this, other)) return 0;
+		if (other is null) return 1;
+		var priorityCmp = Priority.CompareTo(other.Priority);
+		return priorityCmp != 0 ? priorityCmp : UniqueId.CompareTo(other.UniqueId);
+	}
 
 	private static uint _idCounter = 0;
 	private static uint _nextId() => _idCounter++;
@@ -27,16 +28,17 @@ public sealed class Props : IDisposable
 
 	internal IEnumerable<int> ManagedIds => props.Keys;
 
-	internal delegate void ValueChangedHandler(Props props, int? id);
-
 	internal delegate void EntriesChangedHandler(Props props);
 
-	internal ValueChangedHandler OnValueChanged = delegate { };
 	internal EntriesChangedHandler OnEntriesChanged = delegate { };
 
+	internal delegate void ValueChangedHandler(Props props, int? id);
+
+	internal ValueChangedHandler OnValueChanged = delegate { };
+
 	internal bool SuppressEagerUpdate = false;
-	internal bool NeedsValueUpdate = false;
 	internal bool NeedsEntriesUpdate = false;
+	internal bool NeedsValueUpdate = false;
 
 	public Props(int priority)
 	{
@@ -58,7 +60,7 @@ public sealed class Props : IDisposable
 				if (!typedProp.UpdateIfChanged(value)) return;
 
 				if (!SuppressEagerUpdate) {
-					OnValueChanged(this, id);
+					OnValueChanged?.Invoke(this, id);
 				} else {
 					NeedsValueUpdate = true;
 				}
@@ -73,7 +75,7 @@ public sealed class Props : IDisposable
 		props[id] = (TProp)Activator.CreateInstance(typeof(TProp), value);
 
 		if (!SuppressEagerUpdate) {
-			OnEntriesChanged(this);
+			OnEntriesChanged?.Invoke(this);
 		} else {
 			NeedsEntriesUpdate = true;
 		}
@@ -126,22 +128,28 @@ public sealed class Props : IDisposable
 
 	private bool _disposed = false;
 
-	private void UnregisterSelf(bool disposing)
+	private void HandleDispose(bool disposing)
 	{
 		if (_disposed) return;
-		Debug.Log($"disposing Props instance {UniqueId}");
-		if (disposing) MaterialPropertyManager.Instance?.Remove(this);
+
+		if (disposing) {
+			Log.Debug($"disposing Props instance {UniqueId}");
+			MaterialPropertyManager.Instance?.Remove(this);
+		} else {
+			Log.Error($"Props instance {UniqueId} was not disposed");
+		}
+
 		_disposed = true;
 	}
 
 	public void Dispose()
 	{
-		UnregisterSelf(true);
+		HandleDispose(true);
 		GC.SuppressFinalize(this);
 	}
 
 	~Props()
 	{
-		UnregisterSelf(false);
+		HandleDispose(false);
 	}
 }

@@ -39,7 +39,8 @@ public sealed class MaterialPropertyManager : MonoBehaviour
 		if (Instance != this) return;
 
 		Instance = null;
-		PropsCascade.ClearCache();
+		foreach (var cascade in rendererCascades.Values) cascade.Dispose();
+		MpbCompilerCache.CheckCleared();
 
 		// Poor man's GC :'(
 		MaterialColorUpdaterPatch.temperatureColorProps.Clear();
@@ -74,7 +75,9 @@ public sealed class MaterialPropertyManager : MonoBehaviour
 
 	public bool Remove(Renderer renderer)
 	{
-		return rendererCascades.Remove(renderer);
+		if (!rendererCascades.Remove(renderer, out var cascade)) return false;
+		cascade.Dispose();
+		return true;
 	}
 
 	public static void RegisterPropertyNamesForDebugLogging(params string[] properties)
@@ -85,15 +88,9 @@ public sealed class MaterialPropertyManager : MonoBehaviour
 	#endregion
 
 	/// Public API equivalent is calling `Props.Dispose`.
-	internal bool Remove(Props props)
+	internal void Remove(Props props)
 	{
-		var removed = false;
-
-		foreach (var cascade in rendererCascades.Values) removed |= cascade.Remove(props);
-
-		PropsCascade.RemoveCacheEntriesWith(props);
-
-		return removed;
+		foreach (var cascade in rendererCascades.Values) cascade.Remove(props);
 	}
 
 	private bool _propRefreshScheduled = false;
@@ -105,9 +102,9 @@ public sealed class MaterialPropertyManager : MonoBehaviour
 
 		foreach (var props in propsLateUpdateQueue) {
 			if (props.NeedsEntriesUpdate) {
-				props.OnEntriesChanged(props);
+				props.OnEntriesChanged?.Invoke(props);
 			} else if (props.NeedsValueUpdate) {
-				props.OnValueChanged(props, null);
+				props.OnValueChanged?.Invoke(props, null);
 			}
 
 			props.SuppressEagerUpdate =

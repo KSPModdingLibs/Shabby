@@ -2,65 +2,17 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using KSPBuildTools;
 using UnityEngine;
 
 namespace Shabby.DynamicProperties;
 
-internal class PropsCascade(Renderer renderer)
+internal class PropsCascade(Renderer renderer) : IDisposable
 {
-	internal readonly Renderer Renderer = renderer;
-
-	private static readonly IEqualityComparer<SortedSet<Props>> CacheKeyComparer =
-		SortedSet<Props>.CreateSetComparer(); // Object equality is fine.
-
-	private static readonly Dictionary<SortedSet<Props>, MpbCompiler> MpbCache =
-		new(CacheKeyComparer);
-
-	internal static void ClearCache() => MpbCache.Clear();
-
-	private readonly SortedSet<Props> cascade = new(Props.PriorityComparer);
-	private MpbCompiler? mpbCompiler = null;
-
-	internal static void RemoveCacheEntry(MpbCompiler entry)
-	{
-		MpbCache.Remove(entry.Cascade);
-		entry.Dispose();
-	}
-
-	private static readonly List<MpbCompiler> _entriesToRemove = [];
-
-	internal static void RemoveCacheEntriesWith(Props props)
-	{
-		foreach (var entry in MpbCache) {
-			if (entry.Key.Contains(props)) _entriesToRemove.Add(entry.Value);
-		}
-
-		foreach (var entry in _entriesToRemove) RemoveCacheEntry(entry);
-		_entriesToRemove.Clear();
-	}
-
-	private void ReacquireCompiler()
-	{
-		mpbCompiler?.Unregister(Renderer);
-
-		if (!MpbCache.TryGetValue(cascade, out mpbCompiler)) {
-			// Don't accidentally mutate the cache key...
-			var clonedCascade = new SortedSet<Props>(cascade, Props.PriorityComparer);
-			mpbCompiler = new MpbCompiler(clonedCascade);
-#if DEBUG
-			if (!(!ReferenceEquals(cascade, mpbCompiler.Cascade) &&
-			      CacheKeyComparer.Equals(cascade, mpbCompiler.Cascade))) {
-				throw new InvalidOperationException("cache key equality check failed");
-			}
-#endif
-			MpbCache[mpbCompiler.Cascade] = mpbCompiler;
-		} else {
-			MaterialPropertyManager.Instance.LogDebug("cache hit");
-		}
-
-		mpbCompiler.Register(Renderer);
-	}
+	private readonly Renderer renderer = renderer;
+	private readonly SortedSet<Props> cascade = new();
+	private MpbCompiler? compiler = null;
 
 	internal bool Add(Props props)
 	{
@@ -76,5 +28,30 @@ internal class PropsCascade(Renderer renderer)
 
 		ReacquireCompiler();
 		return true;
+	}
+
+	private void ReacquireCompiler()
+	{
+		UnregisterFromCompiler();
+		compiler = MpbCompilerCache.Get(cascade);
+		compiler.Register(renderer);
+	}
+
+	private void UnregisterFromCompiler()
+	{
+		compiler?.Unregister(renderer);
+		compiler = null;
+	}
+
+	public void Dispose()
+	{
+		Log.Debug($"disposing cascade instance {RuntimeHelpers.GetHashCode(this)}");
+		UnregisterFromCompiler();
+		GC.SuppressFinalize(this);
+	}
+
+	~PropsCascade()
+	{
+		UnregisterFromCompiler();
 	}
 }
