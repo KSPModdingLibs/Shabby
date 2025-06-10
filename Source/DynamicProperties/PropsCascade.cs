@@ -45,8 +45,6 @@ internal class PropsCascade(Renderer renderer)
 		mpbCompiler?.Unregister(Renderer);
 
 		if (!MpbCache.TryGetValue(cascade, out mpbCompiler)) {
-			MaterialPropertyManager.Instance.LogDebug("building new cache entry");
-
 			// Don't accidentally mutate the cache key...
 			var clonedCascade = new SortedSet<Props>(cascade, Props.PriorityComparer);
 			mpbCompiler = new MpbCompiler(clonedCascade);

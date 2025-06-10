@@ -10,6 +10,8 @@ namespace Shabby.DynamicProperties;
 
 internal class MpbCompiler : IDisposable
 {
+	#region Fields
+
 	/// Immutable.
 	internal readonly SortedSet<Props> Cascade;
 
@@ -19,8 +21,13 @@ internal class MpbCompiler : IDisposable
 
 	private static readonly MaterialPropertyBlock EmptyMpb = new();
 
+	#endregion
+
 	internal MpbCompiler(SortedSet<Props> cascades)
 	{
+		MaterialPropertyManager.Instance?.LogDebug(
+			$"new cache entry {RuntimeHelpers.GetHashCode(this)}");
+
 		Cascade = cascades;
 		RebuildManagerMap();
 		RewriteMpb();
@@ -29,6 +36,8 @@ internal class MpbCompiler : IDisposable
 			props.OnEntriesChanged += OnPropsEntriesChanged;
 		}
 	}
+
+	#region Renderer registration
 
 	internal void Register(Renderer renderer)
 	{
@@ -40,7 +49,20 @@ internal class MpbCompiler : IDisposable
 	{
 		linkedRenderers.Remove(renderer);
 		renderer.SetPropertyBlock(EmptyMpb);
+		CheckLiveness();
 	}
+
+	private void CheckLiveness()
+	{
+		if (linkedRenderers.Count > 0) return;
+		MaterialPropertyManager.Instance.LogDebug(
+			$"dead cache entry {RuntimeHelpers.GetHashCode(this)}");
+		PropsCascade.RemoveCacheEntry(this);
+	}
+
+	#endregion
+
+	#region Props updates
 
 	private void RebuildManagerMap()
 	{
@@ -65,15 +87,19 @@ internal class MpbCompiler : IDisposable
 	private void OnPropsValueChanged(Props props)
 	{
 		WriteMpb(props);
-		Apply();
+		ApplyAll();
 	}
 
 	private void OnPropsEntriesChanged(Props props)
 	{
 		RebuildManagerMap();
 		RewriteMpb();
-		Apply();
+		ApplyAll();
 	}
+
+	#endregion
+
+	#region Apply
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void WriteMpb(Props props)
@@ -92,7 +118,7 @@ internal class MpbCompiler : IDisposable
 
 	private readonly List<Renderer> _deadRenderers = [];
 
-	internal void Apply()
+	private void ApplyAll()
 	{
 		foreach (var renderer in linkedRenderers) {
 			if (renderer == null) {
@@ -108,11 +134,12 @@ internal class MpbCompiler : IDisposable
 			MaterialPropertyManager.Instance.Remove(dead);
 		}
 
-		if (linkedRenderers.Count == 0) {
-			MaterialPropertyManager.Instance.LogDebug("dead cache entry");
-			PropsCascade.RemoveCacheEntry(this);
-		}
+		CheckLiveness();
 	}
+
+	#endregion
+
+	#region dtor
 
 	private bool _disposed = false;
 
@@ -140,4 +167,6 @@ internal class MpbCompiler : IDisposable
 	{
 		UnlinkProps();
 	}
+
+	#endregion
 }
