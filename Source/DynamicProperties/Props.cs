@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Shabby.DynamicProperties;
 
-public sealed class Props(int priority) : IDisposable
+public sealed class Props : IDisposable
 {
 	/// Ordered by lowest to highest priority. Equal priority is disambiguated by unique IDs.
 	/// Note that this is compatible with default object reference equality.
@@ -21,7 +21,7 @@ public sealed class Props(int priority) : IDisposable
 
 	public readonly uint UniqueId = _nextId();
 
-	public readonly int Priority = priority;
+	public readonly int Priority;
 
 	private readonly Dictionary<int, Prop> props = [];
 
@@ -37,6 +37,12 @@ public sealed class Props(int priority) : IDisposable
 	internal bool SuppressEagerUpdate = false;
 	internal bool NeedsValueUpdate = false;
 	internal bool NeedsEntriesUpdate = false;
+
+	public Props(int priority)
+	{
+		Priority = priority;
+		SuppressEagerUpdatesThisFrame();
+	}
 
 	public void SuppressEagerUpdatesThisFrame()
 	{
