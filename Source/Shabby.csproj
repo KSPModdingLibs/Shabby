@@ -43,9 +43,14 @@
 
   <!-- Publicizer -->
   <ItemGroup>
-    <Publicize Include="Assembly-CSharp:Part.modelRenderersCache"/>
-    <Publicize Include="Assembly-CSharp:Part.highlightRenderer"/>
+    <Publicize Include="Assembly-CSharp:MaterialColorUpdater.setColor"/>
+    <Publicize Include="Assembly-CSharp:ModuleColorChanger.color"/>
+    <Publicize Include="Assembly-CSharp:ModuleColorChanger.renderers"/>
+    <Publicize Include="Assembly-CSharp:ModuleJettison.jettisonTemperatureRenderer"/>
     <Publicize Include="Assembly-CSharp:Part.CreateRendererLists"/>
+    <Publicize Include="Assembly-CSharp:Part.highlightRenderer"/>
+    <Publicize Include="Assembly-CSharp:Part.modelRenderersCache"/>
+    <Publicize Include="Assembly-CSharp:Part.temperatureRenderer"/>
   </ItemGroup>
 
   <!-- Version Files -->
