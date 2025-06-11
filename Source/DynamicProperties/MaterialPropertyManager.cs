@@ -46,7 +46,7 @@ public sealed class MaterialPropertyManager : MonoBehaviour
 		MaterialColorUpdaterPatch.temperatureColorProps.Clear();
 		ModuleColorChangerPatch.mccProps.Clear();
 
-		this.LogDebug("destroyed");
+		this.LogMessage("destroyed");
 	}
 
 	#endregion
@@ -56,7 +56,7 @@ public sealed class MaterialPropertyManager : MonoBehaviour
 	public bool Set(Renderer renderer, Props props)
 	{
 		if (renderer == null) {
-			Log.LogError(this, $"cannot set property on null renderer {renderer.GetHashCode()}");
+			this.LogWarning($"cannot set property on null renderer {renderer.GetHashCode()}");
 			return false;
 		}
 
