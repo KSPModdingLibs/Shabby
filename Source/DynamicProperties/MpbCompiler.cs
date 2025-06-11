@@ -1,6 +1,5 @@
 #nullable enable
 
-using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using KSPBuildTools;
@@ -8,7 +7,7 @@ using UnityEngine;
 
 namespace Shabby.DynamicProperties;
 
-internal class MpbCompiler : IDisposable
+internal class MpbCompiler : Disposable
 {
 	#region Fields
 
@@ -126,8 +125,8 @@ internal class MpbCompiler : IDisposable
 		}
 
 		foreach (var dead in _deadRenderers) {
-			MaterialPropertyManager.Instance.LogDebug($"dead renderer {dead.GetHashCode()}");
-			MaterialPropertyManager.Instance.Remove(dead);
+			MaterialPropertyManager.Instance?.LogDebug($"dead renderer {dead.GetHashCode()}");
+			MaterialPropertyManager.Instance?.Remove(dead);
 		}
 
 		_deadRenderers.Clear();
@@ -135,34 +134,13 @@ internal class MpbCompiler : IDisposable
 
 	#endregion
 
-	#region dtor
+	protected override bool IsUnused() => linkedRenderers.Count == 0;
 
-	private bool _disposed = false;
-
-	private void HandleDispose()
+	protected override void OnDispose()
 	{
-		if (_disposed) return;
-
-		Log.Debug($"disposing MPB compiler instance {RuntimeHelpers.GetHashCode(this)}");
-
 		foreach (var props in Cascade) {
 			props.OnEntriesChanged -= OnPropsEntriesChanged;
 			props.OnValueChanged -= OnPropsValueChanged;
 		}
-
-		_disposed = true;
 	}
-
-	public void Dispose()
-	{
-		HandleDispose();
-		GC.SuppressFinalize(this);
-	}
-
-	~MpbCompiler()
-	{
-		HandleDispose();
-	}
-
-	#endregion
 }

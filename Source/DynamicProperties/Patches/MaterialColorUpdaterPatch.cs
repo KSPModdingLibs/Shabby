@@ -6,16 +6,14 @@ using UnityEngine;
 namespace Shabby.DynamicProperties;
 
 [HarmonyPatch(typeof(MaterialColorUpdater))]
-public class MaterialColorUpdaterPatch
+internal class MaterialColorUpdaterPatch : StockPatchBase<MaterialColorUpdater>
 {
-	internal static readonly Dictionary<MaterialColorUpdater, Props> temperatureColorProps = [];
-
 	[HarmonyPostfix]
 	[HarmonyPatch("CreateRendererList")]
 	private static void MaterialColorUpdater_CreateRendererList_Postfix(
 		MaterialColorUpdater __instance)
 	{
-		var props = temperatureColorProps[__instance] = new Props(int.MinValue + 1);
+		var props = Props[__instance] = new Props(int.MinValue + 1);
 		foreach (var renderer in __instance.renderers) {
 			MaterialPropertyManager.Instance?.Set(renderer, props);
 		}
@@ -23,7 +21,7 @@ public class MaterialColorUpdaterPatch
 
 	private static void Update_SetProperty(MaterialColorUpdater mcu)
 	{
-		temperatureColorProps[mcu].SetColor(mcu.propertyID, mcu.setColor);
+		Props[mcu].SetColor(mcu.propertyID, mcu.setColor);
 	}
 
 	[HarmonyTranspiler]
@@ -64,7 +62,7 @@ public class MaterialColorUpdaterPatch
 	private static void DisposeIfExists(MaterialColorUpdater mcu)
 	{
 		if (mcu == null) return;
-		if (temperatureColorProps.TryGetValue(mcu, out var props)) props.Dispose();
+		if (Props.TryGetValue(mcu, out var props)) props.Dispose();
 	}
 
 	[HarmonyPrefix]

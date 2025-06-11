@@ -43,8 +43,9 @@ public sealed class MaterialPropertyManager : MonoBehaviour
 		MpbCompilerCache.CheckCleared();
 
 		// Poor man's GC :'(
-		MaterialColorUpdaterPatch.temperatureColorProps.Clear();
-		ModuleColorChangerPatch.mccProps.Clear();
+		PartPatch.ClearOnSceneSwitch();
+		MaterialColorUpdaterPatch.ClearOnSceneSwitch();
+		ModuleColorChangerPatch.ClearOnSceneSwitch();
 
 		this.LogMessage("destroyed");
 	}

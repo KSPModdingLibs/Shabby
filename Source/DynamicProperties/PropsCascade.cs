@@ -1,14 +1,11 @@
 #nullable enable
 
-using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using KSPBuildTools;
 using UnityEngine;
 
 namespace Shabby.DynamicProperties;
 
-internal class PropsCascade(Renderer renderer) : IDisposable
+internal class PropsCascade(Renderer renderer) : Disposable
 {
 	private readonly Renderer renderer = renderer;
 	private readonly SortedSet<Props> cascade = new();
@@ -43,15 +40,5 @@ internal class PropsCascade(Renderer renderer) : IDisposable
 		compiler = null;
 	}
 
-	public void Dispose()
-	{
-		Log.Debug($"disposing cascade instance {RuntimeHelpers.GetHashCode(this)}");
-		UnregisterFromCompiler();
-		GC.SuppressFinalize(this);
-	}
-
-	~PropsCascade()
-	{
-		UnregisterFromCompiler();
-	}
+	protected override void OnDispose() => UnregisterFromCompiler();
 }

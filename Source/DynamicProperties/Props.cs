@@ -6,16 +6,9 @@ using UnityEngine;
 
 namespace Shabby.DynamicProperties;
 
-public sealed class Props : IComparable<Props>, IDisposable
+public sealed class Props : Disposable, IComparable<Props>
 {
-	/// Ordered by lowest to highest priority. Equal priority is disambiguated by unique IDs.
-	public int CompareTo(Props other)
-	{
-		if (ReferenceEquals(this, other)) return 0;
-		if (other is null) return 1;
-		var priorityCmp = Priority.CompareTo(other.Priority);
-		return priorityCmp != 0 ? priorityCmp : UniqueId.CompareTo(other.UniqueId);
-	}
+	#region Fields
 
 	private static uint _idCounter = 0;
 	private static uint _nextId() => _idCounter++;
@@ -30,20 +23,54 @@ public sealed class Props : IComparable<Props>, IDisposable
 
 	internal delegate void EntriesChangedHandler(Props props);
 
-	internal EntriesChangedHandler OnEntriesChanged = delegate { };
+	internal EntriesChangedHandler OnEntriesChanged = null;
 
 	internal delegate void ValueChangedHandler(Props props, int? id);
 
-	internal ValueChangedHandler OnValueChanged = delegate { };
+	internal ValueChangedHandler OnValueChanged = null;
 
 	internal bool SuppressEagerUpdate = false;
 	internal bool NeedsEntriesUpdate = false;
 	internal bool NeedsValueUpdate = false;
 
+	#endregion
+
 	public Props(int priority)
 	{
 		Priority = priority;
 		SuppressEagerUpdatesThisFrame();
+		Log.Debug($"new Props instance {UniqueId}");
+	}
+
+	/// Ordered by lowest to highest priority. Equal priority is disambiguated by unique IDs.
+	public int CompareTo(Props other)
+	{
+		if (ReferenceEquals(this, other)) return 0;
+		if (other is null) return 1;
+		var priorityCmp = Priority.CompareTo(other.Priority);
+		return priorityCmp != 0 ? priorityCmp : UniqueId.CompareTo(other.UniqueId);
+	}
+
+	/// This is equivalent to reference equality.
+	public override int GetHashCode() => unchecked((int)UniqueId);
+
+	public override string ToString()
+	{
+		var sb = StringBuilderCache.Acquire();
+		sb.AppendFormat("(Priority {0}) {{\n", Priority);
+		foreach (var (id, prop) in props) {
+			sb.AppendFormat("{0} = {1}\n", PropIdToName.Get(id), prop);
+		}
+
+		sb.AppendLine("}");
+		return sb.ToStringAndRelease();
+	}
+
+	#region Set/Remove
+
+	private bool HasConsumer()
+	{
+		return OnValueChanged.GetInvocationList().Length > 0;
 	}
 
 	public void SuppressEagerUpdatesThisFrame()
@@ -68,7 +95,7 @@ public sealed class Props : IComparable<Props>, IDisposable
 				return;
 			}
 
-			MaterialPropertyManager.Instance.LogWarning(
+			MaterialPropertyManager.Instance?.LogWarning(
 				$"property {PropIdToName.Get(id)} has mismatched type; overwriting with {typeof(T).Name}!");
 		}
 
@@ -93,6 +120,10 @@ public sealed class Props : IComparable<Props>, IDisposable
 	public void SetTexture(int id, Texture value) => _internalSet<Texture, PropTexture>(id, value);
 	public void SetVector(int id, Vector4 value) => _internalSet<Vector4, PropVector>(id, value);
 
+	#endregion
+
+	#region Has
+
 	private bool _internalHas<T>(int id) => props.TryGetValue(id, out var prop) && prop is Prop<T>;
 
 	public bool HasColor(int id) => _internalHas<Color>(id);
@@ -100,6 +131,8 @@ public sealed class Props : IComparable<Props>, IDisposable
 	public bool HasInt(int id) => _internalHas<int>(id);
 	public bool HasTexture(int id) => _internalHas<Texture>(id);
 	public bool HasVector(int id) => _internalHas<Vector4>(id);
+
+	#endregion
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal void Write(int id, MaterialPropertyBlock mpb)
@@ -114,42 +147,6 @@ public sealed class Props : IComparable<Props>, IDisposable
 		prop.Write(id, mpb);
 	}
 
-	public override string ToString()
-	{
-		var sb = StringBuilderCache.Acquire();
-		sb.AppendFormat("(Priority {0}) {{\n", Priority);
-		foreach (var (id, prop) in props) {
-			sb.AppendFormat("{0} = {1}\n", PropIdToName.Get(id), prop);
-		}
-
-		sb.AppendLine("}");
-		return sb.ToStringAndRelease();
-	}
-
-	private bool _disposed = false;
-
-	private void HandleDispose(bool disposing)
-	{
-		if (_disposed) return;
-
-		if (disposing) {
-			Log.Debug($"disposing Props instance {UniqueId}");
-			MaterialPropertyManager.Instance?.Remove(this);
-		} else {
-			Log.Error($"Props instance {UniqueId} was not disposed");
-		}
-
-		_disposed = true;
-	}
-
-	public void Dispose()
-	{
-		HandleDispose(true);
-		GC.SuppressFinalize(this);
-	}
-
-	~Props()
-	{
-		HandleDispose(false);
-	}
+	protected override bool IsUnused() => OnEntriesChanged == null && OnValueChanged == null;
+	protected override void OnDispose() => MaterialPropertyManager.Instance?.Remove(this);
 }

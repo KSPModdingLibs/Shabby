@@ -6,22 +6,20 @@ using UnityEngine;
 namespace Shabby.DynamicProperties;
 
 [HarmonyPatch(typeof(Part))]
-internal static class PartPatch
+internal class PartPatch : StockPatchBase<Part>
 {
-	private static readonly Dictionary<Part, Props> rimHighlightProps = [];
-
 	[HarmonyPostfix]
 	[HarmonyPatch("Awake")]
 	private static void Awake_Postfix(Part __instance)
 	{
-		rimHighlightProps[__instance] = new Props(int.MinValue + 1);
+		Props[__instance] = new Props(int.MinValue + 1);
 	}
 
 	[HarmonyPostfix]
 	[HarmonyPatch("CreateRendererLists")]
 	private static void CreateRendererLists_Postfix(Part __instance)
 	{
-		var props = rimHighlightProps[__instance];
+		var props = Props[__instance];
 		props.SetFloat(PropertyIDs._RimFalloff, 2f);
 		props.SetColor(PropertyIDs._RimColor, Part.defaultHighlightNone);
 		foreach (var renderer in __instance.HighlightRenderer) {
@@ -35,13 +33,13 @@ internal static class PartPatch
 	{
 		__instance.CreateRendererLists();
 		__instance.mpb.SetFloat(PropertyIDs._Opacity, opacity);
-		rimHighlightProps[__instance].SetFloat(PropertyIDs._Opacity, opacity);
+		Props[__instance].SetFloat(PropertyIDs._Opacity, opacity);
 		return false;
 	}
 
 	private static void Highlight_SetRimColor(Part part, Color color)
 	{
-		rimHighlightProps[part].SetColor(PropertyIDs._RimColor, color);
+		Props[part].SetColor(PropertyIDs._RimColor, color);
 	}
 
 	[HarmonyTranspiler]
@@ -122,7 +120,7 @@ internal static class PartPatch
 	[HarmonyPatch("OnDestroy")]
 	private static void OnDestroy_Postfix(Part __instance)
 	{
-		if (rimHighlightProps.Remove(__instance, out var props)) {
+		if (Props.Remove(__instance, out var props)) {
 			props.Dispose();
 		}
 	}
