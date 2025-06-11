@@ -11,18 +11,11 @@ public class MaterialColorUpdaterPatch
 	internal static readonly Dictionary<MaterialColorUpdater, Props> temperatureColorProps = [];
 
 	[HarmonyPostfix]
-	[HarmonyPatch(MethodType.Constructor, typeof(Transform), typeof(int), typeof(Part))]
-	private static void MaterialColorUpdater_Ctor_Postfix(MaterialColorUpdater __instance)
-	{
-		temperatureColorProps[__instance] = new Props(int.MinValue + 1);
-	}
-
-	[HarmonyPostfix]
 	[HarmonyPatch("CreateRendererList")]
 	private static void MaterialColorUpdater_CreateRendererList_Postfix(
 		MaterialColorUpdater __instance)
 	{
-		var props = temperatureColorProps[__instance];
+		var props = temperatureColorProps[__instance] = new Props(int.MinValue + 1);
 		foreach (var renderer in __instance.renderers) {
 			MaterialPropertyManager.Instance?.Set(renderer, props);
 		}
@@ -46,6 +39,7 @@ public class MaterialColorUpdaterPatch
 		foreach (var insn in insns) {
 			yield return insn;
 
+			// this.mpb.SetColor(this.propertyID, this.setColor);
 			// IL_0022: ldarg.0      // this
 			// IL_0023: ldfld        class UnityEngine.MaterialPropertyBlock MaterialColorUpdater::mpb
 			// IL_0028: ldarg.0      // this
@@ -54,14 +48,17 @@ public class MaterialColorUpdaterPatch
 			// IL_002f: ldfld        valuetype UnityEngine.Color MaterialColorUpdater::setColor
 			// IL_0034: callvirt     instance void UnityEngine.MaterialPropertyBlock::SetColor(int32, valuetype UnityEngine.Color)
 			if (insn.Calls(MPB_SetColor)) break;
+			// Remaining code applies MPB to renderers.
 		}
 
-		CodeInstruction[] replace = [
+		// MaterialColorUpdaterPatch.Update_SetProperty(this);
+		// return;
+		CodeInstruction[] updateProp = [
 			new(OpCodes.Ldarg_0), // this
 			CodeInstruction.Call(() => Update_SetProperty(default)),
 			new(OpCodes.Ret)
 		];
-		foreach (var insn in replace) yield return insn;
+		foreach (var insn in updateProp) yield return insn;
 	}
 
 	private static void DisposeIfExists(MaterialColorUpdater mcu)
@@ -82,6 +79,39 @@ public class MaterialColorUpdaterPatch
 	private static void Part_OnDestroy_Postfix(Part __instance)
 	{
 		DisposeIfExists(__instance.temperatureRenderer);
+	}
+
+	[HarmonyTranspiler]
+	[HarmonyPatch(typeof(ModuleJettison), nameof(ModuleJettison.Jettison))]
+	private static IEnumerable<CodeInstruction> ModuleJettison_Jettison_Transpiler(
+		IEnumerable<CodeInstruction> insns)
+	{
+		var ModuleJettison_jettisonTemperatureRenderer = AccessTools.Field(
+			typeof(ModuleJettison), nameof(ModuleJettison.jettisonTemperatureRenderer));
+
+		// this.jettisonTemperatureRenderer = null;
+		// IL_0327: ldarg.0      // this
+		// IL_0328: ldnull
+		// IL_0329: stfld        class MaterialColorUpdater ModuleJettison::jettisonTemperatureRenderer
+		CodeMatch[] matchSetTempRendererNull = [
+			new(OpCodes.Ldarg_0),
+			new(OpCodes.Ldnull),
+			new(OpCodes.Stfld, ModuleJettison_jettisonTemperatureRenderer)
+		];
+
+		var matcher = new CodeMatcher(insns);
+
+		matcher
+			.MatchStartForward(matchSetTempRendererNull)
+			.ThrowIfNotMatch("failed to find set temp renderer null")
+			.Insert(
+				// MaterialColorUpdaterPatch.DisposeIfExists(this.jettisonTemperatureRenderer);
+				new CodeInstruction(OpCodes.Ldarg_0), // this
+				new CodeInstruction(OpCodes.Ldfld, ModuleJettison_jettisonTemperatureRenderer),
+				CodeInstruction.Call(() => DisposeIfExists(default))
+			);
+
+		return matcher.InstructionEnumeration();
 	}
 
 	// FIXME: write a transpiler for ModuleJettison.Jettison.

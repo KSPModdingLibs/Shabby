@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Reflection;
 using HarmonyLib;
 using Highlighting;
@@ -48,11 +47,11 @@ internal static class NoDuplicateMaterials
 
 	private static IEnumerable<MethodBase> TargetMethods() => [
 		AccessTools.Method(typeof(Highlighter), "GrabRenderers"),
-		AccessTools.Method(typeof(MaterialColorUpdater), "CreateRendererList"),
-		AccessTools.Method(typeof(ModuleColorChanger), "ProcessMaterialsList"),
-		AccessTools.Method(
-			typeof(GameObjectExtension), nameof(GameObjectExtension.SetLayerRecursive),
-			[typeof(GameObject), typeof(int), typeof(bool), typeof(int)])
+		// AccessTools.Method(typeof(MaterialColorUpdater), "CreateRendererList"),
+		AccessTools.Method(typeof(ModuleColorChanger), "ProcessMaterialsList")
+		// AccessTools.Method(
+		// 	typeof(GameObjectExtension), nameof(GameObjectExtension.SetLayerRecursive),
+		// 	[typeof(GameObject), typeof(int), typeof(bool), typeof(int)])
 	];
 
 	[HarmonyTranspiler]

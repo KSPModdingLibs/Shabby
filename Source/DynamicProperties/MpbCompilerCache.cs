@@ -1,8 +1,6 @@
-using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using KSPBuildTools;
-using UnityEngine;
 
 namespace Shabby.DynamicProperties;
 
@@ -45,7 +43,7 @@ internal static class MpbCompilerCache
 	{
 		if (Cache.Count == 0) return;
 
-		Debug.LogError($"{Cache.Count} MpbCompilers were not disposed; forcing removal");
+		Log.Error($"{Cache.Count} MpbCompilers were not disposed; forcing removal");
 		foreach (var compiler in Cache.Values) compiler.Dispose();
 		Cache.Clear();
 	}
