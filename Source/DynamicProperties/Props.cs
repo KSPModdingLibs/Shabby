@@ -68,15 +68,30 @@ public sealed class Props : Disposable, IComparable<Props>
 
 	#region Set/Remove
 
-	private bool HasConsumer()
-	{
-		return OnValueChanged.GetInvocationList().Length > 0;
-	}
-
 	public void SuppressEagerUpdatesThisFrame()
 	{
 		SuppressEagerUpdate = true;
 		MaterialPropertyManager.Instance?.ScheduleLateUpdate(this);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private void FireOnEntriesChanged()
+	{
+		if (!SuppressEagerUpdate) {
+			OnEntriesChanged?.Invoke(this);
+		} else {
+			NeedsEntriesUpdate = true;
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private void FireOnValueChanged(int? id)
+	{
+		if (!SuppressEagerUpdate) {
+			OnValueChanged?.Invoke(this, id);
+		} else {
+			NeedsValueUpdate = true;
+		}
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -85,13 +100,7 @@ public sealed class Props : Disposable, IComparable<Props>
 		if (props.TryGetValue(id, out var prop)) {
 			if (prop is TProp typedProp) {
 				if (!typedProp.UpdateIfChanged(value)) return;
-
-				if (!SuppressEagerUpdate) {
-					OnValueChanged?.Invoke(this, id);
-				} else {
-					NeedsValueUpdate = true;
-				}
-
+				FireOnValueChanged(id);
 				return;
 			}
 
@@ -100,12 +109,7 @@ public sealed class Props : Disposable, IComparable<Props>
 		}
 
 		props[id] = (TProp)Activator.CreateInstance(typeof(TProp), value);
-
-		if (!SuppressEagerUpdate) {
-			OnEntriesChanged?.Invoke(this);
-		} else {
-			NeedsEntriesUpdate = true;
-		}
+		FireOnEntriesChanged();
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -117,13 +121,25 @@ public sealed class Props : Disposable, IComparable<Props>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void SetInt(int id, int value) => _internalSet<int, PropInt>(id, value);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void SetTexture(int id, Texture value) => _internalSet<Texture, PropTexture>(id, value);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void SetVector(int id, Vector4 value) => _internalSet<Vector4, PropVector>(id, value);
+
+	public bool Remove(int id)
+	{
+		var removed = props.Remove(id);
+		if (!removed) return false;
+		FireOnEntriesChanged();
+		return true;
+	}
 
 	#endregion
 
 	#region Has
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private bool _internalHas<T>(int id) => props.TryGetValue(id, out var prop) && prop is Prop<T>;
 
 	public bool HasColor(int id) => _internalHas<Color>(id);
