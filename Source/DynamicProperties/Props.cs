@@ -164,5 +164,5 @@ public sealed class Props : Disposable, IComparable<Props>
 	}
 
 	protected override bool IsUnused() => OnEntriesChanged == null && OnValueChanged == null;
-	protected override void OnDispose() => MaterialPropertyManager.Instance?.Remove(this);
+	protected override void OnDispose() => MaterialPropertyManager.Instance?.Unregister(this);
 }

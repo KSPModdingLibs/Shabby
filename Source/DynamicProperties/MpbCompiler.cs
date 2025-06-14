@@ -111,25 +111,19 @@ internal class MpbCompiler : Disposable
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void Apply(Renderer renderer) => renderer.SetPropertyBlock(mpb);
 
-	private readonly List<Renderer> _deadRenderers = [];
-
 	private void ApplyAll()
 	{
+		var hasDeadRenderer = false;
+
 		foreach (var renderer in linkedRenderers) {
-			if (renderer == null) {
-				_deadRenderers.Add(renderer!);
-				continue;
+			if (renderer != null) {
+				Apply(renderer);
+			} else {
+				hasDeadRenderer = true;
 			}
-
-			Apply(renderer);
 		}
 
-		foreach (var dead in _deadRenderers) {
-			MaterialPropertyManager.Instance?.LogDebug($"dead renderer {dead.GetHashCode()}");
-			MaterialPropertyManager.Instance?.Remove(dead);
-		}
-
-		_deadRenderers.Clear();
+		if (hasDeadRenderer) MaterialPropertyManager.Instance?.CheckRemoveDeadRenderers();
 	}
 
 	#endregion

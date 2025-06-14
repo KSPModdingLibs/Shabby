@@ -57,10 +57,7 @@ public sealed class MaterialPropertyManager : MonoBehaviour
 
 	public bool Set(Renderer renderer, Props props)
 	{
-		if (renderer == null) {
-			this.LogWarning($"cannot set property on null renderer {renderer.GetHashCode()}");
-			return false;
-		}
+		if (!CheckRendererAlive(renderer)) return false;
 
 		if (!rendererCascades.TryGetValue(renderer, out var cascade)) {
 			rendererCascades[renderer] = cascade = new PropsCascade(renderer);
@@ -69,15 +66,18 @@ public sealed class MaterialPropertyManager : MonoBehaviour
 		return cascade.Add(props);
 	}
 
-	public bool Remove(Renderer renderer, Props props)
+	public bool Unset(Renderer renderer, Props props)
 	{
+		if (!CheckRendererAlive(renderer)) return false;
 		if (!rendererCascades.TryGetValue(renderer, out var cascade)) return false;
 		return cascade.Remove(props);
 	}
 
-	public bool Remove(Renderer renderer)
+	public bool Unregister(Renderer renderer)
 	{
+		if ((object)renderer == null) return false;
 		if (!rendererCascades.Remove(renderer, out var cascade)) return false;
+		if (renderer == null) this.LogDebug($"dead renderer {renderer.GetHashCode()}");
 		cascade.Dispose();
 		return true;
 	}
@@ -89,10 +89,34 @@ public sealed class MaterialPropertyManager : MonoBehaviour
 
 	#endregion
 
-	/// Public API equivalent is calling `Props.Dispose`.
-	internal void Remove(Props props)
+	private bool CheckRendererAlive(Renderer renderer)
 	{
-		foreach (var cascade in rendererCascades.Values) cascade.Remove(props);
+		if (renderer != null) return true;
+		this.LogWarning($"cannot modify null renderer {renderer?.GetHashCode()}");
+		if ((object)renderer != null) Unregister(renderer);
+		return false;
+	}
+
+	private readonly List<Renderer> _deadRenderers = [];
+
+	internal void CheckRemoveDeadRenderers()
+	{
+		foreach (var renderer in rendererCascades.Keys) {
+			if (renderer == null) _deadRenderers.Add(renderer);
+		}
+
+		foreach (var deadRenderer in _deadRenderers) Unregister(deadRenderer);
+		_deadRenderers.Clear();
+	}
+
+	/// Public API equivalent is calling `Props.Dispose`.
+	internal void Unregister(Props props)
+	{
+		foreach (var (renderer, cascade) in rendererCascades) {
+			if (renderer != null) cascade.Remove(props);
+		}
+
+		CheckRemoveDeadRenderers();
 	}
 
 	private bool _propRefreshScheduled = false;
