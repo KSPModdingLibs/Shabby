@@ -17,257 +17,120 @@ along with Shabby.  If not, see
 */
 
 using System;
-using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Reflection.Emit;
-using System.Runtime.CompilerServices;
-using UnityEngine;
 using HarmonyLib;
 using KSPBuildTools;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
-using Mono.Cecil.Rocks;
-using MonoMod.Utils;
-using Code = Mono.Cecil.Cil.Code;
+using UnityEngine;
 
-namespace Shabby
+namespace Shabby;
+
+[KSPAddon(KSPAddon.Startup.Instantly, true)]
+public class Shabby : MonoBehaviour
 {
-	struct Replacement
-	{
-		public Replacement(ConfigNode node)
-		{
-			name = node.GetValue(nameof(name));
-			shader = node.GetValue(nameof(shader));
-		}
+	private static Harmony harmony;
 
-		public string name;
-		public string shader;
+	private static readonly Dictionary<string, Shader> shabShaders = [];
+	private static readonly Dictionary<string, string> nameReplacements = [];
+	private static readonly Dictionary<string, string> iconReplacements = [];
+
+	public static void AddShader(Shader shader)
+	{
+		shabShaders[shader.name] = shader;
 	}
 
-	[KSPAddon(KSPAddon.Startup.Instantly, true)]
-	public class Shabby : MonoBehaviour
+	private static Shader FindLoadedShader(string shaderName)
 	{
-		static Harmony harmony;
-
-		static Dictionary<string, Shader> loadedShaders;
-
-		public static readonly Dictionary<string, Shader> iconShaders = new Dictionary<string, Shader>();
-
-		static readonly Dictionary<string, Replacement> nameReplacements = new Dictionary<string, Replacement>();
-
-		public static void AddShader(Shader shader)
-		{
-			loadedShaders[shader.name] = shader;
-		}
-
-		static Shader FindLoadedShader(string shaderName)
-		{
-			Shader shader;
-			if (loadedShaders.TryGetValue(shaderName, out shader)) {
-				Log.Debug($"custom shader: {shader.name}");
-				return shader;
-			}
-
-			shader = Shader.Find(shaderName);
-			//if (shader != null) {
-			//	Debug.Log ($"[Shabby] stock shader: {shader.name}");
-			//}
+		if (shabShaders.TryGetValue(shaderName, out var shader)) {
+			Log.Debug($"custom shader: `{shader.name}`");
 			return shader;
 		}
 
-		public static Shader FindShader(string shaderName)
-		{
-			Shader shader = null;
-			if (nameReplacements.TryGetValue(shaderName, out var replacement)) {
-				shader = FindLoadedShader(replacement.shader);
+		return Shader.Find(shaderName);
+	}
 
-				if (shader == null) {
-					Log.Error($"failed to find shader {replacement.shader} to replace {shaderName}");
-				}
+	public static Shader FindShader(string shaderName)
+	{
+		if (nameReplacements.TryGetValue(shaderName, out var replacementName)) {
+			var replacementShader = FindLoadedShader(replacementName);
+			if (replacementShader != null) {
+				return replacementShader;
 			}
 
-			if (shader == null) {
-				shader = FindLoadedShader(shaderName);
-			}
-
-			return shader;
+			Log.Error($"failed to find replacement shader `{replacementName}` for `{shaderName}`");
 		}
 
-		public static Shader TryFindIconShader(string shaderName)
-		{
-			if (!iconShaders.TryGetValue(shaderName, out var iconShader)) return null;
-			Log.Debug($"custom icon shader {shaderName} -> {iconShader.name}");
-			return iconShader;
+		return FindLoadedShader(shaderName);
+	}
+
+	public static Shader TryFindIconShader(string shaderName)
+	{
+		if (!iconReplacements.TryGetValue(shaderName, out var iconShaderName)) {
+			return null;
 		}
 
-		public static void MMPostLoadCallback()
-		{
-			var configNodes = GameDatabase.Instance.GetConfigNodes("SHABBY");
-			foreach (var shabbyNode in configNodes) {
-				foreach (var replacementNode in shabbyNode.GetNodes("REPLACE")) {
-					Replacement replacement = new Replacement(replacementNode);
-					nameReplacements[replacement.name] = replacement;
-				}
+		var iconShader = FindShader(iconShaderName);
+		Log.Debug($"custom icon shader `{shaderName}` -> `{iconShader.name}`");
+		return iconShader;
+	}
 
-				foreach (var iconNode in shabbyNode.GetNodes("ICON_SHADER")) {
-					var shader = iconNode.GetValue("shader");
-					var iconShaderName = iconNode.GetValue("iconShader");
-					var iconShader = FindShader(iconShaderName ?? "");
-					if (string.IsNullOrEmpty(shader) || iconShader == null) {
-						Log.Error($"invalid icon shader specification {shader} -> {iconShaderName}");
-					} else {
-						iconShaders[shader] = iconShader;
-					}
-				}
-			}
-
-			MaterialDefLibrary.Load();
-		}
-
-		void Awake()
-		{
-			if (loadedShaders == null) {
-				loadedShaders = new Dictionary<string, Shader>();
-
-				harmony = new Harmony("Shabby");
-				Log.Message("Harmony patching");
-				foreach (var type in Assembly.GetExecutingAssembly().GetTypes()) {
-					PatchClassProcessor processor = new(harmony, type);
-					if (processor.Patch() is not List<MethodInfo> patchedMethods) continue;
-					if (patchedMethods.Count == 0) {
-						Log.Message($"`{type.Name}` skipped");
-						continue;
-					}
-					Log.Message($"`{type.Name}` patched methods {string.Join(", ", patchedMethods.Select(m => $"`{m.Name}`"))}");
-				}
-
-				// Register as an explicit MM callback such that it is run before all reflected
-				// callbacks (as used by most mods), which may wish to access the MaterialDef library.
-				var addPostPatchCB = AccessTools.Method("ModuleManager.MMPatchLoader:AddPostPatchCallback");
-				var delegateType = addPostPatchCB.GetParameters()[0].ParameterType;
-				var callbackDelegate =
-					Delegate.CreateDelegate(delegateType, typeof(Shabby), nameof(MMPostLoadCallback));
-				addPostPatchCB.Invoke(null, new object[] { callbackDelegate });
-			}
-		}
-
-
-		private static MethodInfo mInfo_ShaderFind_Original;
-		private static MethodInfo mInfo_ShaderFind_Replacement;
-
-		private void Start()
-		{
-			string cecilMethodName = "UnityEngine.Shader UnityEngine.Shader::Find(System.String)";
-			mInfo_ShaderFind_Original = AccessTools.Method(typeof(Shader), nameof(Shader.Find));
-			mInfo_ShaderFind_Replacement = AccessTools.Method(typeof(Shabby), nameof(Shabby.FindShader));
-
-			List<MethodBase> callSites = new List<MethodBase>();
-
-			Log.Debug("Beginning search for `Shader.Find` callsites");
-
-			// Don't use appdomain, we don't want to accidentally patch Unity itself and this avoid
-			// having to iterate on the BCL and Unity assemblies.
-			foreach (AssemblyLoader.LoadedAssembly kspAssembly in AssemblyLoader.loadedAssemblies) {
-				if (kspAssembly.assembly == Assembly.GetExecutingAssembly())
-					continue;
-
-// alternative implementation using Harmony instead of Cecil, but this is like 4x slower
-#if false
-				foreach (var type in kspAssembly.assembly.GetTypes()) {
-					var methods =
- type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly);
-					foreach (var method in methods) {
-						try {
-							if (method.HasMethodBody() && !method.ContainsGenericParameters && !method.IsGenericMethod) {
-								foreach (var instruction in PatchProcessor.ReadMethodBody(method)) {
-									if (instruction.Key == OpCodes.Call) {
-										if (object.ReferenceEquals(instruction.Value, mInfo_ShaderFind_Original)) {
-											callSites.Add(method);
-											break;
-										}
-									}
-								}
-							}
-						} catch (Exception ex) {
-							LogError($"exception while patching {method.Name}: {ex}");
-						}
-					}
-				}
-#else
-				if (string.IsNullOrEmpty(kspAssembly.assembly?.Location))
-					continue;
-
-				AssemblyDefinition assemblyDef;
-				try {
-					assemblyDef = AssemblyDefinition.ReadAssembly(kspAssembly.assembly.Location);
-
-					if (assemblyDef == null)
-						throw new FileLoadException($"Couldn't read assembly \"{kspAssembly.assembly.Location}\"");
-				} catch (Exception e) {
-					Log.Warning($"Replace failed for assembly {kspAssembly.name}\n{e}");
+	private void Awake()
+	{
+		harmony = new Harmony("Shabby");
+		Log.Message("Harmony patching");
+		foreach (var type in Assembly.GetExecutingAssembly().GetTypes()) {
+			try {
+				PatchClassProcessor processor = new(harmony, type);
+				if (processor.Patch() is not List<MethodInfo> patchedMethods) continue;
+				if (patchedMethods.Count == 0) {
+					Log.Message($"`{type.Name}` skipped");
 					continue;
 				}
 
-				foreach (ModuleDefinition moduleDef in assemblyDef.Modules) {
-					foreach (TypeDefinition typeDef in moduleDef.GetAllTypes()) {
-						foreach (MethodDefinition methodDef in typeDef.Methods) {
-							if (!methodDef.HasBody)
-								continue;
-
-							foreach (Instruction instruction in methodDef.Body.Instructions) {
-								if (instruction.OpCode.Code == Code.Call
-								    && instruction.Operand is MethodReference mRef
-								    && mRef.FullName == cecilMethodName) {
-									MethodBase callSite;
-									try {
-										callSite = methodDef.ResolveReflection();
-
-										if (callSite == null)
-											throw new MemberAccessException();
-									} catch {
-										Log.Warning(
-											$"Failed to patch method {assemblyDef.Name}::{typeDef.Name}.{methodDef.Name}");
-										break;
-									}
-
-									callSites.Add(callSite);
-									break;
-								}
-							}
-						}
-					}
-				}
-
-				assemblyDef.Dispose();
-#endif
-			}
-
-			MethodInfo callSiteTranspiler = AccessTools.Method(typeof(Shabby), nameof(Shabby.CallSiteTranspiler));
-
-			foreach (MethodBase callSite in callSites) {
-				if (callSite == mInfo_ShaderFind_Replacement)
-					continue;
-
-				try {
-					harmony.Patch(callSite, null, null, new HarmonyMethod(callSiteTranspiler));
-					Log.Debug($"Patching call site: {callSite.DeclaringType.Assembly.GetName().Name}::{callSite.DeclaringType}.{callSite.Name}");
-				} catch (Exception e) {
-					Log.Warning($"Failed to patch call site: {callSite.DeclaringType.Assembly.GetName().Name}::{callSite.DeclaringType}.{callSite.Name}\n{e.Message}\n{e.StackTrace}");
-				}
+				Log.Message(
+					$"`{type.Name}` patched methods {string.Join(", ", patchedMethods.Select(m => $"`{m.Name}`"))}");
+			} catch (Exception e) {
+				Log.Error($"encountered exception while applying `{type.Name}`:\n{e}");
 			}
 		}
 
-		static IEnumerable<CodeInstruction> CallSiteTranspiler(IEnumerable<CodeInstruction> instructions)
-		{
-			foreach (CodeInstruction instruction in instructions) {
-				if (instruction.opcode == OpCodes.Call &&
-				    ReferenceEquals(instruction.operand, mInfo_ShaderFind_Original))
-					instruction.operand = mInfo_ShaderFind_Replacement;
+		// Register as an explicit MM callback such that it is run before all reflected
+		// callbacks (as used by most mods), which may wish to access the MaterialDef library.
+		var addPostPatchCB =
+			AccessTools.Method("ModuleManager.MMPatchLoader:AddPostPatchCallback");
+		var delegateType = addPostPatchCB.GetParameters()[0].ParameterType;
+		var callbackDelegate =
+			Delegate.CreateDelegate(delegateType, typeof(Shabby), nameof(MMPostLoad));
+		addPostPatchCB.Invoke(null, [callbackDelegate]);
+	}
 
-				yield return instruction;
+	private static void LoadConfigs(Dictionary<string, string> library,
+		ConfigNode entries, string entryName, string fromKey, string toKey)
+	{
+		foreach (var entry in entries.GetNodes(entryName)) {
+			var from = entry.GetValue(fromKey);
+			var to = entry.GetValue(toKey);
+			if (string.IsNullOrEmpty(from) || string.IsNullOrEmpty(to)) {
+				Log.Error($"invalid {entryName} specification `{from}` ->`{to}`");
+			} else {
+				library[from] = to;
 			}
 		}
+	}
+
+	private static void MMPostLoad()
+	{
+		foreach (var shabbyNode in GameDatabase.Instance.GetConfigNodes("SHABBY")) {
+			LoadConfigs(nameReplacements, shabbyNode, "REPLACE", "name", "shader");
+			LoadConfigs(iconReplacements, shabbyNode, "ICON_SHADER", "shader", "iconShader");
+		}
+
+		MaterialReplacement.MaterialDefLibrary.Load();
+	}
+
+	private void Start()
+	{
+		ShaderFindOverride.ReplaceCallSites(harmony);
 	}
 }

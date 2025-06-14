@@ -3,7 +3,11 @@
 
   <!-- MSBuild Dependencies -->
   <ItemGroup>
-    <PackageReference Include="KSPBuildTools" Version="0.0.3-alpha.4" />
+    <PackageReference Include="Krafs.Publicizer" Version="2.3.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="KSPBuildTools" Version="0.0.3-alpha.4"/>
     <PackageReference Include="MinVer" Version="5.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
@@ -35,6 +39,21 @@
       <CKANIdentifier>Harmony2</CKANIdentifier>
       <Private>False</Private>
     </Reference>
+  </ItemGroup>
+
+  <!-- Publicizer -->
+  <ItemGroup>
+    <Publicize Include="Assembly-CSharp:MaterialColorUpdater.setColor"/>
+    <Publicize Include="Assembly-CSharp:ModuleColorChanger.color"/>
+    <Publicize Include="Assembly-CSharp:ModuleColorChanger.renderers"/>
+    <Publicize Include="Assembly-CSharp:ModuleJettison.jettisonTemperatureRenderer"/>
+    <Publicize Include="Assembly-CSharp:Part.CreateRendererLists"/>
+    <Publicize Include="Assembly-CSharp:Part.highlightRenderer"/>
+    <Publicize Include="Assembly-CSharp:Part.modelRenderersCache"/>
+    <Publicize Include="Assembly-CSharp:Part.temperatureRenderer"/>
+    <Publicize Include="Assembly-CSharp:ProceduralFairings.FairingPanel.mpb"/>
+    <Publicize Include="Assembly-CSharp:ProceduralFairings.FairingPanel.mr"/>
+    <Publicize Include="Assembly-CSharp:ProceduralFairings.FairingPanel.opacity"/>
   </ItemGroup>
 
   <!-- Version Files -->
