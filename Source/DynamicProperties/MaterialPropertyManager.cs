@@ -46,6 +46,7 @@ public sealed class MaterialPropertyManager : MonoBehaviour
 		PartPatch.ClearOnSceneSwitch();
 		MaterialColorUpdaterPatch.ClearOnSceneSwitch();
 		ModuleColorChangerPatch.ClearOnSceneSwitch();
+		FairingPanelPatch.ClearOnSceneSwitch();
 
 		this.LogMessage("destroyed");
 	}

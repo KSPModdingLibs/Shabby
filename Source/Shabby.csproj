@@ -51,6 +51,9 @@
     <Publicize Include="Assembly-CSharp:Part.highlightRenderer"/>
     <Publicize Include="Assembly-CSharp:Part.modelRenderersCache"/>
     <Publicize Include="Assembly-CSharp:Part.temperatureRenderer"/>
+    <Publicize Include="Assembly-CSharp:ProceduralFairings.FairingPanel.mpb"/>
+    <Publicize Include="Assembly-CSharp:ProceduralFairings.FairingPanel.mr"/>
+    <Publicize Include="Assembly-CSharp:ProceduralFairings.FairingPanel.opacity"/>
   </ItemGroup>
 
   <!-- Version Files -->
