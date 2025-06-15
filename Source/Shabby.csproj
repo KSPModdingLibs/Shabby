@@ -3,7 +3,11 @@
 
   <!-- MSBuild Dependencies -->
   <ItemGroup>
-    <PackageReference Include="KSPBuildTools" Version="0.0.4" />
+    <PackageReference Include="Krafs.Publicizer" Version="2.3.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="KSPBuildTools" Version="0.0.4"/>
     <PackageReference Include="MinVer" Version="5.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
@@ -35,6 +39,12 @@
       <CKANIdentifier>Harmony2</CKANIdentifier>
       <Private>False</Private>
     </Reference>
+  </ItemGroup>
+
+  <!-- Publicizer -->
+  <ItemGroup>
+    <Publicize Include="Assembly-CSharp"/>
+    <Publicize Include="UnityEngine.CoreModule:UnityEngine.Object.m_CachedPtr"/>
   </ItemGroup>
 
   <!-- Version Files -->
