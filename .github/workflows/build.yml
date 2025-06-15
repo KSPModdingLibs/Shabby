@@ -24,9 +24,9 @@ jobs:
         uses: drewcassidy/yaclog@1.5.0
         id: yaclog-show
 
-      - uses: KSPModdingLibs/KSPBuildTools/.github/actions/setup-ckan@0.0.2
+      - uses: KSPModdingLibs/KSPBuildTools/.github/actions/setup-ckan@0.0.4
 
-      - uses: KSPModdingLibs/KSPBuildTools/.github/actions/compile@0.0.2
+      - uses: KSPModdingLibs/KSPBuildTools/.github/actions/compile@0.0.4
         with:
           ksp-zip-url: https://github.com/KSPModdingLibs/KSPLibs/raw/main/KSP-1.12.5.zip
 
@@ -36,7 +36,7 @@ jobs:
           mod-name: Shabby
           output-path: GameData/Shabby/shabby-version.cfg
 
-      - uses: KSPModdingLibs/KSPBuildTools/.github/actions/assemble-release@0.0.2
+      - uses: KSPModdingLibs/KSPBuildTools/.github/actions/assemble-release@0.0.4
         id: assemble-release
         with:
           output-file-name: 'Shabby'
