@@ -102,7 +102,7 @@ internal class PartPatch : StockPatchBase<Part>
 			.Start()
 			.MatchStartForward(matchSetRimColor)
 			.ThrowIfNotMatch("failed to find MPB set _RimColor call")
-			.RemoveInstructions(matchSetRimColor.Length)
+			.Advance(matchSetRimColor.Length)
 			.InsertAndAdvance(
 				// PartPatch.Highlight_SetRimColor(this, value);
 				new CodeInstruction(OpCodes.Ldarg_0), // `this`
