@@ -84,6 +84,11 @@ public sealed class MaterialPropertyManager : MonoBehaviour
 		return true;
 	}
 
+	/// Get a reference to the `Props` instance containing the stock properties of the given
+	/// `part` (namely, `_Opacity`, `_RimFalloff`, `_RimColor`, and `_TemperatureColor` (flight
+	/// only)). The returned instance must not be written to.
+	public Props? GetStockPropsForPart(Part part) => PartPatch.Props.GetValueOrDefault(part);
+
 	public static void RegisterPropertyNamesForDebugLogging(params string[] properties)
 	{
 		foreach (var property in properties) PropIdToName.Register(property);
