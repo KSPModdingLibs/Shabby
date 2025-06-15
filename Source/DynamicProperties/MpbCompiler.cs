@@ -47,7 +47,7 @@ internal class MpbCompiler : Disposable
 	internal void Unregister(Renderer renderer)
 	{
 		linkedRenderers.Remove(renderer);
-		if (renderer != null) renderer.SetPropertyBlock(EmptyMpb);
+		if (!renderer.IsDestroyed()) renderer.SetPropertyBlock(EmptyMpb);
 
 		if (linkedRenderers.Count > 0) return;
 		Log.Debug(
@@ -113,17 +113,17 @@ internal class MpbCompiler : Disposable
 
 	private void ApplyAll()
 	{
-		var hasDeadRenderer = false;
+		var hasDestroyedRenderer = false;
 
 		foreach (var renderer in linkedRenderers) {
-			if (renderer != null) {
-				Apply(renderer);
+			if (renderer.IsDestroyed()) {
+				hasDestroyedRenderer = true;
 			} else {
-				hasDeadRenderer = true;
+				Apply(renderer);
 			}
 		}
 
-		if (hasDeadRenderer) MaterialPropertyManager.Instance?.CheckRemoveDeadRenderers();
+		if (hasDestroyedRenderer) MaterialPropertyManager.Instance?.CheckRemoveDestroyedRenderers();
 	}
 
 	#endregion

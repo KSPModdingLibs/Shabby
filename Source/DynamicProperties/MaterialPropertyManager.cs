@@ -1,3 +1,5 @@
+#nullable enable
+
 using System.Collections.Generic;
 using KSPBuildTools;
 using UnityEngine;
@@ -9,7 +11,7 @@ public sealed class MaterialPropertyManager : MonoBehaviour
 {
 	#region Fields
 
-	public static MaterialPropertyManager Instance { get; private set; }
+	public static MaterialPropertyManager? Instance { get; private set; }
 
 	private readonly Dictionary<Renderer, PropsCascade> rendererCascades = [];
 
@@ -75,9 +77,9 @@ public sealed class MaterialPropertyManager : MonoBehaviour
 
 	public bool Unregister(Renderer renderer)
 	{
-		if ((object)renderer == null) return false;
+		if (renderer.IsNullref()) return false;
 		if (!rendererCascades.Remove(renderer, out var cascade)) return false;
-		if (renderer == null) this.LogDebug($"dead renderer {renderer.GetHashCode()}");
+		if (renderer.IsDestroyed()) this.LogDebug($"destroyed renderer {renderer.GetHashCode()}");
 		cascade.Dispose();
 		return true;
 	}
@@ -91,35 +93,43 @@ public sealed class MaterialPropertyManager : MonoBehaviour
 
 	private bool CheckRendererAlive(Renderer renderer)
 	{
-		if (renderer != null) return true;
-		this.LogWarning($"cannot modify null renderer {renderer?.GetHashCode()}");
-		if ((object)renderer != null) Unregister(renderer);
-		return false;
-	}
-
-	private readonly List<Renderer> _deadRenderers = [];
-
-	internal void CheckRemoveDeadRenderers()
-	{
-		foreach (var renderer in rendererCascades.Keys) {
-			if (renderer == null) _deadRenderers.Add(renderer);
+		if (renderer.IsNullref()) {
+			Log.LogError(this, "renderer reference is null");
+			return false;
 		}
 
-		foreach (var deadRenderer in _deadRenderers) Unregister(deadRenderer);
-		_deadRenderers.Clear();
+		if (renderer.IsDestroyed()) {
+			this.LogWarning($"cannot modify destroyed renderer {renderer.GetHashCode()}");
+			Unregister(renderer);
+			return false;
+		}
+
+		return true;
+	}
+
+	private readonly List<Renderer> _destroyedRenderers = [];
+
+	internal void CheckRemoveDestroyedRenderers()
+	{
+		foreach (var renderer in rendererCascades.Keys) {
+			if (renderer.IsDestroyed()) _destroyedRenderers.Add(renderer);
+		}
+
+		foreach (var destroyed in _destroyedRenderers) Unregister(destroyed);
+		_destroyedRenderers.Clear();
 	}
 
 	/// Public API equivalent is calling `Props.Dispose`.
 	internal void Unregister(Props props)
 	{
 		foreach (var (renderer, cascade) in rendererCascades) {
-			if (renderer != null) cascade.Remove(props);
+			if (!renderer.IsDestroyed()) cascade.Remove(props);
 		}
 
-		CheckRemoveDeadRenderers();
+		CheckRemoveDestroyedRenderers();
 	}
 
-	private bool _propRefreshScheduled = false;
+	private bool _propsUpdateScheduled = false;
 	private static readonly WaitForEndOfFrame WfEoF = new();
 
 	private IEnumerator<YieldInstruction> Co_propsLateUpdate()
@@ -138,14 +148,14 @@ public sealed class MaterialPropertyManager : MonoBehaviour
 		}
 
 		propsLateUpdateQueue.Clear();
-		_propRefreshScheduled = false;
+		_propsUpdateScheduled = false;
 	}
 
 	internal void ScheduleLateUpdate(Props props)
 	{
 		propsLateUpdateQueue.Add(props);
-		if (_propRefreshScheduled) return;
+		if (_propsUpdateScheduled) return;
 		StartCoroutine(Co_propsLateUpdate());
-		_propRefreshScheduled = true;
+		_propsUpdateScheduled = true;
 	}
 }

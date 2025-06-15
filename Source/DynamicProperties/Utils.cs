@@ -7,6 +7,12 @@ namespace Shabby.DynamicProperties;
 public static class Utils
 {
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool IsDestroyed(this UnityEngine.Object obj) => obj.m_CachedPtr == IntPtr.Zero;
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool IsNullref(this UnityEngine.Object obj) => ReferenceEquals(obj, null);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool ApproxEqualsAbs(float a, float b, float eps) =>
 		Math.Abs(b - a) <= eps;
 
