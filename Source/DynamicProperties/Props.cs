@@ -1,3 +1,5 @@
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -13,9 +15,9 @@ public sealed class Props : Disposable, IComparable<Props>
 	private static uint _idCounter = 0;
 	private static uint _nextId() => _idCounter++;
 
-	public readonly uint UniqueId = _nextId();
+	public uint UniqueId { get; } = _nextId();
 
-	public readonly int Priority;
+	public int Priority { get; }
 
 	private readonly Dictionary<int, Prop> props = [];
 
@@ -23,11 +25,11 @@ public sealed class Props : Disposable, IComparable<Props>
 
 	internal delegate void EntriesChangedHandler(Props props);
 
-	internal EntriesChangedHandler OnEntriesChanged = null;
+	internal EntriesChangedHandler? OnEntriesChanged = null;
 
 	internal delegate void ValueChangedHandler(Props props, int? id);
 
-	internal ValueChangedHandler OnValueChanged = null;
+	internal ValueChangedHandler? OnValueChanged = null;
 
 	internal bool SuppressEagerUpdate = false;
 	internal bool NeedsEntriesUpdate = false;
@@ -43,10 +45,10 @@ public sealed class Props : Disposable, IComparable<Props>
 	}
 
 	/// Ordered by lowest to highest priority. Equal priority is disambiguated by unique IDs.
-	public int CompareTo(Props other)
+	public int CompareTo(Props? other)
 	{
 		if (ReferenceEquals(this, other)) return 0;
-		if (other is null) return 1;
+		if (other == null) return 1;
 		var priorityCmp = Priority.CompareTo(other.Priority);
 		return priorityCmp != 0 ? priorityCmp : UniqueId.CompareTo(other.UniqueId);
 	}
@@ -137,7 +139,7 @@ public sealed class Props : Disposable, IComparable<Props>
 
 	#endregion
 
-	#region Has
+	#region Has/Get
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private bool _internalHas<T>(int id) => props.TryGetValue(id, out var prop) && prop is Prop<T>;
@@ -147,6 +149,18 @@ public sealed class Props : Disposable, IComparable<Props>
 	public bool HasInt(int id) => _internalHas<int>(id);
 	public bool HasTexture(int id) => _internalHas<Texture>(id);
 	public bool HasVector(int id) => _internalHas<Vector4>(id);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private T? _internalGet<T, TProp>(int id) where TProp : Prop<T> =>
+		props.TryGetValue(id, out var prop) && prop is TProp typedProp
+			? typedProp.Value
+			: default;
+
+	public Color GetColorOrDefault(int id) => _internalGet<Color, PropColor>(id);
+	public float GetFloatOrDefault(int id) => _internalGet<float, PropFloat>(id);
+	public int GetIntOrDefault(int id) => _internalGet<int, PropInt>(id);
+	public Texture? GetTextureOrDefault(int id) => _internalGet<Texture, PropTexture>(id);
+	public Vector4 GetVectorOrDefault(int id) => _internalGet<Vector4, PropVector>(id);
 
 	#endregion
 
