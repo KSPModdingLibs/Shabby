@@ -14,7 +14,7 @@ internal class MpbCompiler : Disposable
 	/// Immutable.
 	internal readonly SortedSet<Props> Cascade;
 
-	private readonly HashSet<Renderer> linkedRenderers = [];
+	private readonly HashSet<Renderer> managedRenderers = [];
 	private readonly MaterialPropertyBlock mpb = new();
 	private readonly Dictionary<int, Props> idManagers = [];
 
@@ -40,16 +40,16 @@ internal class MpbCompiler : Disposable
 
 	internal void Register(Renderer renderer)
 	{
-		linkedRenderers.Add(renderer);
+		managedRenderers.Add(renderer);
 		Apply(renderer);
 	}
 
 	internal void Unregister(Renderer renderer)
 	{
-		linkedRenderers.Remove(renderer);
+		managedRenderers.Remove(renderer);
 		if (!renderer.IsDestroyed()) renderer.SetPropertyBlock(EmptyMpb);
 
-		if (linkedRenderers.Count > 0) return;
+		if (managedRenderers.Count > 0) return;
 		Log.Debug(
 			$"last renderer unregistered from MpbCompiler instance {RuntimeHelpers.GetHashCode(this)}");
 		MpbCompilerCache.Remove(this);
@@ -115,7 +115,7 @@ internal class MpbCompiler : Disposable
 	{
 		var hasDestroyedRenderer = false;
 
-		foreach (var renderer in linkedRenderers) {
+		foreach (var renderer in managedRenderers) {
 			if (renderer.IsDestroyed()) {
 				hasDestroyedRenderer = true;
 			} else {
@@ -128,7 +128,7 @@ internal class MpbCompiler : Disposable
 
 	#endregion
 
-	protected override bool IsUnused() => linkedRenderers.Count == 0;
+	protected override bool IsUnused() => managedRenderers.Count == 0;
 
 	protected override void OnDispose()
 	{

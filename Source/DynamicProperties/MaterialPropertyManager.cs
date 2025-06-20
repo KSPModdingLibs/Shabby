@@ -45,10 +45,10 @@ public sealed class MaterialPropertyManager : MonoBehaviour
 		MpbCompilerCache.CheckCleared();
 
 		// Poor man's GC :'(
-		PartPatch.ClearOnSceneSwitch();
-		MaterialColorUpdaterPatch.ClearOnSceneSwitch();
-		ModuleColorChangerPatch.ClearOnSceneSwitch();
-		FairingPanelPatch.ClearOnSceneSwitch();
+		PartPatch.CheckCleared();
+		MaterialColorUpdaterPatch.CheckCleared();
+		ModuleColorChangerPatch.CheckCleared();
+		FairingPanelPatch.CheckCleared();
 
 		this.LogMessage("destroyed");
 	}
@@ -85,9 +85,20 @@ public sealed class MaterialPropertyManager : MonoBehaviour
 	}
 
 	/// Get a reference to the `Props` instance containing the stock properties of the given
-	/// `part` (namely, `_Opacity`, `_RimFalloff`, `_RimColor`, and `_TemperatureColor` (flight
-	/// only)). The returned instance must not be written to.
+	/// `part` (namely, `_Opacity`, `_RimFalloff`, and `_RimColor`).
+	/// The returned instance must not be written to.
 	public Props? GetStockPropsForPart(Part part) => PartPatch.Props.GetValueOrDefault(part);
+
+	/// Get the part's current `_TemperatureColor` property, if it is set (only in flight).
+	public Color? GetStockTemperatureColorForPart(Part part)
+	{
+		if (!MaterialColorUpdaterPatch.Props.TryGetValue(part.temperatureRenderer, out var props)) {
+			return null;
+		}
+
+		if (!props.HasColor(PhysicsGlobals.temperaturePropertyID)) return null;
+		return props.GetColorOrDefault(PhysicsGlobals.temperaturePropertyID);
+	}
 
 	public static void RegisterPropertyNamesForDebugLogging(params string[] properties)
 	{
@@ -137,7 +148,7 @@ public sealed class MaterialPropertyManager : MonoBehaviour
 	private bool _propsUpdateScheduled = false;
 	private static readonly WaitForEndOfFrame WfEoF = new();
 
-	private IEnumerator<YieldInstruction> Co_propsLateUpdate()
+	private IEnumerator<YieldInstruction> Co_PropsLateUpdate()
 	{
 		yield return WfEoF;
 
@@ -160,7 +171,7 @@ public sealed class MaterialPropertyManager : MonoBehaviour
 	{
 		propsLateUpdateQueue.Add(props);
 		if (_propsUpdateScheduled) return;
-		StartCoroutine(Co_propsLateUpdate());
+		StartCoroutine(Co_PropsLateUpdate());
 		_propsUpdateScheduled = true;
 	}
 }

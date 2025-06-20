@@ -7,7 +7,7 @@ internal abstract class StockPatchBase<T>
 {
 	internal static readonly Dictionary<T, Props> Props = [];
 
-	internal static void ClearOnSceneSwitch()
+	internal static void CheckCleared()
 	{
 		if (Props.Count == 0) return;
 
