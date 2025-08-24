@@ -24,7 +24,7 @@ jobs:
         uses: drewcassidy/yaclog@1.5.0
         id: yaclog-show
 
-      - uses: KSPModdingLibs/KSPBuildTools/.github/actions/setup-ckan@0.0.4
+      - uses: https://github.com/KSPModdingLibs/KSPBuildTools/.github/actions/setup-ckan@0.0.4
 
       - uses: KSPModdingLibs/KSPBuildTools/.github/actions/compile@0.0.4
         with:
