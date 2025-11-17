@@ -21,7 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using HarmonyLib;
-using KSPBuildTools;
+using KSPCommunityLib.Logging;
 using UnityEngine;
 
 namespace Shabby;

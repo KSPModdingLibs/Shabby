@@ -20,23 +20,28 @@ jobs:
           submodules: true
           fetch-depth: 0 # get full history, not shallow clone
 
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
       - name: Get Changelog Information
-        uses: drewcassidy/yaclog@1.5.0
+        uses: drewcassidy/yaclog@1.6.2
         id: yaclog-show
 
-      - uses: KSPModdingLibs/KSPBuildTools/.github/actions/setup-ckan@0.0.4
+      - uses: KSPModdingLibs/KSPBuildTools/.github/actions/setup-ckan@1.0.0-alpha.3
 
-      - uses: KSPModdingLibs/KSPBuildTools/.github/actions/compile@0.0.4
+      - uses: KSPModdingLibs/KSPBuildTools/.github/actions/compile@1.0.0-alpha.3
         with:
           ksp-zip-url: https://github.com/KSPModdingLibs/KSPLibs/raw/main/KSP-1.12.5.zip
 
       - name: Generate KSP Changelog
-        uses: drewcassidy/yaclog-ksp@1.2.0
+        uses: drewcassidy/yaclog-ksp@1.3.0
         with:
           mod-name: Shabby
           output-path: GameData/Shabby/shabby-version.cfg
 
-      - uses: KSPModdingLibs/KSPBuildTools/.github/actions/assemble-release@0.0.4
+      - uses: KSPModdingLibs/KSPBuildTools/.github/actions/assemble-release@1.0.0-alpha.3
         id: assemble-release
         with:
           output-file-name: 'Shabby'
