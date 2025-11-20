@@ -18,7 +18,7 @@ along with Shabby.  If not, see
 
 using System.Collections.Generic;
 using System.Linq;
-using KSPBuildTools;
+using KSPCommunityLib.Logging;
 using UnityEngine;
 
 namespace Shabby.MaterialReplacement;

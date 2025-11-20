@@ -4,7 +4,7 @@ using System.IO;
 using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
-using KSPBuildTools;
+using KSPCommunityLib.Logging;
 using Mono.Cecil;
 using Mono.Cecil.Rocks;
 using MonoMod.Utils;

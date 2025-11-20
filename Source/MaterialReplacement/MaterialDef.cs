@@ -19,7 +19,7 @@ along with Shabby.  If not, see
 using System;
 using System.Collections.Generic;
 using HarmonyLib;
-using KSPBuildTools;
+using KSPCommunityLib.Logging;
 using UnityEngine;
 
 namespace Shabby.MaterialReplacement;
@@ -177,5 +177,5 @@ public class MaterialDef : ILogContextProvider
 		return material;
 	}
 
-	public string context() => $"MaterialDef {name}";
+	public string LoggingContext() => $"MaterialDef {name}";
 }

@@ -21,7 +21,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
-using KSPBuildTools;
+using KSPCommunityLib.Logging;
 using UnityEngine;
 
 namespace Shabby.MaterialReplacement;
