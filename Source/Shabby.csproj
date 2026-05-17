@@ -43,6 +43,20 @@
       <Destination>$(RepoRootPath)GameData/Shabby/Shabby.version</Destination>
       <URL>https://github.com/KSPModdingLibs/Shabby/releases/latest/download/Shabby.version</URL>
       <Download>https://github.com/KSPModdingLibs/Shabby/releases/latest</Download>
+      <KSP_Version>1.12.5</KSP_Version>
+      <KSP_Version_Max>1.12.99</KSP_Version_Max>
     </KSPVersionFile>
   </ItemGroup>
+  <Target Name="FixKSPVersionMaxString" AfterTargets="GenerateKSPVersionFile">
+    <ReadLinesFromFile File="$(RepoRootPath)GameData/Shabby/Shabby.version">
+      <Output TaskParameter="Lines" ItemName="_ShabbyVersionJsonLines" />
+    </ReadLinesFromFile>
+    <PropertyGroup>
+      <_ShabbyVersionJson>@(_ShabbyVersionJsonLines, '%0a')</_ShabbyVersionJson>
+    </PropertyGroup>
+    <JsonPoke Content="$(_ShabbyVersionJson)" Query="$.KSP_VERSION_MAX" RawValue="'1.12.99'">
+      <Output TaskParameter="Content" PropertyName="_ShabbyVersionJson" />
+    </JsonPoke>
+    <WriteLinesToFile File="$(RepoRootPath)GameData/Shabby/Shabby.version" Lines="$(_ShabbyVersionJson)" Overwrite="true" />
+  </Target>
 </Project>
