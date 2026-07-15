@@ -29,17 +29,25 @@ public class DatabaseLoaderTexture_SHAB : DatabaseLoader<GameDatabase.TextureInf
 	public override IEnumerator Load(UrlDir.UrlFile urlFile, FileInfo file)
 	{
 		Log.Message($"loading `{urlFile.fullPath}`");
-		var bundle = AssetBundle.LoadFromFile(urlFile.fullPath);
+
+		var bundleRequest = AssetBundle.LoadFromFileAsync(urlFile.fullPath);
+		yield return bundleRequest;
+
+		var bundle = bundleRequest.assetBundle;
 		if (!bundle) {
 			Log.Warning($"could not load `{urlFile.fullPath}`");
-		} else {
-			var shaders = bundle.LoadAllAssets<Shader>();
-			foreach (var shader in shaders) {
-				Log.Debug($"adding custom shader `{shader.name}`");
-				Shabby.AddShader(shader);
-			}
+			yield break;
 		}
 
-		yield break;
+		var request = bundle.LoadAllAssetsAsync<Shader>();
+		yield return request;
+
+		foreach (var obj in request.allAssets) {
+			if (obj is not Shader shader)
+				continue;
+
+			Log.Debug($"adding custom shader `{shader.name}`");
+			Shabby.AddShader(shader);
+		}
 	}
 }
